@@ -11,6 +11,8 @@ nhom03-65ktpm/
 └── src/              # Mã nguồn Flutter
 ```
 
+Tài liệu đề cương: [docs/de_cuong_project/de_cuong.md](docs/de_cuong_project/de_cuong.md)
+
 ## Chạy ứng dụng
 
 ```bash
