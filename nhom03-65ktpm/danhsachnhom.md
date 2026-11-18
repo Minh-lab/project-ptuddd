@@ -14,6 +14,8 @@
 
 ## Hướng Dẫn Thiết Lập Môi Trường
 
+> Mã nguồn ứng dụng sẽ được bổ sung vào thư mục `src/` khi hoàn thành.
+
 ### Yêu cầu
 - Flutter SDK 3.24.3 (khuyến nghị dùng [FVM](https://fvm.app/))
 - Android Studio / Xcode (tùy nền tảng chạy)
