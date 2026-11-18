@@ -2,7 +2,7 @@
 
 - **Lớp học phần / Lớp sinh hoạt:** 65KTPM
 - **Tên đề tài / Ứng dụng:** NoteSmart - Ứng dụng ghi chú thông minh
-- **Giảng viên hướng dẫn:** [Tên Giảng viên]
+- **Giảng viên hướng dẫn:** Đỗ Oanh Cường
 
 ## Bảng Thông Tin Thành Viên
 
