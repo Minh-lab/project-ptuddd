@@ -16,7 +16,7 @@
 
 ## Hướng Dẫn Thiết Lập Môi Trường
 
-> Mã nguồn ứng dụng sẽ được bổ sung vào thư mục `src/` khi hoàn thành.
+Mã nguồn ứng dụng nằm trong thư mục `src/` (Flutter, package `smart_note`).
 
 ### Yêu cầu
 - Flutter SDK 3.24.3 (khuyến nghị dùng [FVM](https://fvm.app/))
@@ -27,7 +27,7 @@
 
 ```bash
 # 1. Di chuyển vào thư mục mã nguồn
-cd nhom03-65ktpm/src
+cd src
 
 # 2. Cài đặt Flutter (nếu dùng FVM)
 fvm install
