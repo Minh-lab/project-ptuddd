@@ -10,7 +10,7 @@
 | --- | --------- | ------------ | ------------- | ------- | ------------------- | ------------ | ----- |
 | 1   | Nguyễn Minh | 2351170607 | 65KTPM | Trưởng nhóm | Quản lý kho mã nguồn, kiến trúc ứng dụng, backend | 100% | [email] |
 | 2   | Dương Hải Đăng | 2351170579 | 65KTPM | Thành viên | Giao diện người dùng (UI/UX) | 100% | [email] |
-| 3   | Nguyễn Hữu Quân | 2351170612 | 65KTPM | Thành viên | Tính năng ghi chú, đồng bộ dữ liệu | 100% | [email] |
+| 3   | Nguyễn Hữu Quân | 2351170612 | 65KTPM | Thành viên | Tính năng ghi chú, đồng bộ dữ liệu | 100% | nguyenhuuquan01122k5@gmail.com |
 | 4   | Mông Thị Bích Hạnh | 2251061770 | 65KTPM | Thành viên | Kiểm thử, tài liệu, báo cáo | 100% | [email] |
 | 5   | Nguyễn Tiến Đạt | 2251161967 | 65KTPM | Thành viên | Tính năng AI, tích hợp API | 100% | [email] |
 
