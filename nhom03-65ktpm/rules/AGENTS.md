@@ -218,11 +218,11 @@ nhom03-65ktpm/src/lib/
 ├── main.dart                 # chỉ khởi tạo app + DI
 ├── app.dart                  # MaterialApp, theme, router
 ├── core/                     # dùng chung toàn app
-│   ├── database/             # Drift: AppDatabase, bảng, DAO
+│   ├── database/             # Drift: AppDatabase, bảng, DAO (cache cục bộ)
 │   ├── di/                   # đăng ký dependency
 │   ├── error/                # Failure / exception
 │   ├── routing/              # khai báo route
-│   ├── services/             # HTTP client, AI client, file, share...
+│   ├── services/             # SupabaseClient, FirebaseAuth, AI client, file, share...
 │   ├── theme/
 │   └── utils/
 └── features/
@@ -232,7 +232,7 @@ nhom03-65ktpm/src/lib/
         │   ├── repositories/
         │   └── usecases/
         ├── data/             # model, datasource, repository impl
-        │   ├── datasources/
+        │   ├── datasources/  # local/ (Drift) và remote/ (Supabase, Firebase)
         │   ├── models/
         │   └── repositories/
         └── presentation/     # bloc/cubit, page, widget
@@ -247,6 +247,24 @@ Quy tắc phụ thuộc (dependency rule) — **chỉ được trỏ vào trong*
 |---|---|---|
 | `domain` | Dart thuần, entity/usecase của chính nó | `flutter/material.dart`, Firebase, Drift, HTTP, bất kỳ package ngoài |
 | `data` | `domain` của chính feature, package hạ tầng (Drift, Firebase, Supabase) | `presentation` |
+
+### Hạ tầng dữ liệu (quyết định của nhóm — bắt buộc)
+
+| Mục đích | Dịch vụ | Ghi chú |
+|---|---|---|
+| Đăng nhập / đăng ký / phiên | **Firebase Authentication** | Chỉ dùng Auth; **không** dùng Firestore/Realtime DB làm nơi lưu dữ liệu chính |
+| Lưu dữ liệu chung của cả nhóm | **Supabase** (PostgreSQL + Storage) | Nguồn dữ liệu chính (source of truth); ảnh quét lưu ở Storage |
+| Cache offline trên máy | **Drift (SQLite)** | Chỉ là bản sao cục bộ để dùng khi mất mạng, không phải nơi lưu chính |
+
+Quy tắc kèm theo:
+
+- Client chỉ dùng **`anon` key** của Supabase và **bật RLS** cho mọi bảng; **tuyệt đối không** nhúng `service_role` key vào app.
+- Mọi bảng dữ liệu phải có cột `user_id` kiểu **`text`** chứa **Firebase UID** (UID Firebase không phải UUID, nên **không** dùng `auth.uid()`).
+- RLS so sánh bằng claim `sub`: `user_id = (select auth.jwt() ->> 'sub')`; phải bật integration **Third-party auth → Firebase** trong Supabase và gán custom claim `role = authenticated` cho user Firebase (nếu không request chạy như `anon` và bị RLS từ chối).
+- Client Supabase phải truyền token Firebase (`accessToken` callback → `getIdToken()`), không tạo phiên đăng nhập riêng trên Supabase.
+- **Schema và policy đã chốt nằm ở [`docs/co_so_du_lieu.md`](../docs/co_so_du_lieu.md)** — mọi thành viên và agent **phải đọc file này trước khi thêm/sửa bảng, cột, index hay policy**; thay đổi schema phải cập nhật lại file đó và báo nhóm.
+- Truy cập Supabase/Firebase **chỉ từ `data/datasources/remote/`**, không gọi trong `presentation`.
+- Không tạo hai nguồn dữ liệu chính song song: ghi vào Supabase là chính, Drift cập nhật sau (offline-first).
 | `presentation` | `domain` (usecase), `core/theme`, `core/routing`, widget dùng chung | Gọi trực tiếp `FirebaseAuth`, `AppDatabase`, HTTP client |
 
 Quy tắc khác:
