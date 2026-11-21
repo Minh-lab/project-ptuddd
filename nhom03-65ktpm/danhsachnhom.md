@@ -2,7 +2,7 @@
 
 - **Repo quản lý:** https://github.com/Minh-lab/project-ptuddd (nhánh `nhom03-65ktpm`)
 - **Bảng tiến độ:** https://github.com/users/Minh-lab/projects/6
-- **Kế hoạch chi tiết:** [ke_hoach_cong_viec.md](project-ptuddd/nhom03-65ktpm/docs/ke_hoach_cong_viec.md)
+- **Kế hoạch chi tiết:** [docs/ke_hoach_cong_viec.md](docs/ke_hoach_cong_viec.md)
 - **Lớp học phần / Lớp sinh hoạt:** 65KTPM
 - **Tên đề tài / Ứng dụng:** NoteSmart – Ứng dụng ghi chú thông minh
 - **Giảng viên hướng dẫn:** Đỗ Oanh Cường
@@ -11,13 +11,15 @@
 
 ## 1. Thông Tin Thành Viên
 
-| STT | Họ và Tên | Mã Sinh Viên | Lớp Sinh Hoạt | Vai Trò | Đóng Góp (%) | Email |
-| --- | --- | --- | --- | --- | --- | --- |
-| 1 | Nguyễn Minh | 2351170607 | 65KTPM | Trưởng nhóm | 100% | [email] |
-| 2 | Dương Hải Đăng | 2351170579 | 65KTPM | Thành viên | 100% | [email] |
-| 3 | Nguyễn Hữu Quân | 2351170612 | 65KTPM | Thành viên | 100% | nguyenhuuquan01122k5@gmail.com |
-| 4 | Mông Thị Bích Hạnh | 2251061770 | 65KTPM | Thành viên | 100% | [email] |
-| 5 | Nguyễn Tiến Đạt | 2251161967 | 65KTPM | Thành viên | 100% | [email] |
+| STT | Họ và Tên | Mã Sinh Viên | Lớp Sinh Hoạt | Vai Trò | Nhiệm Vụ Phân Công | Đóng Góp (%) | Email |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | Nguyễn Minh | 2351170607 | 65KTPM | Trưởng nhóm | Kiến trúc ứng dụng, khởi tạo dự án, Firebase Auth, nhật ký hằng ngày, tóm tắt AI | 100% | [email] |
+| 2 | Dương Hải Đăng | 2351170579 | 65KTPM | Thành viên | Tìm kiếm ghi chú, chia sẻ ghi chú, sao lưu và đồng bộ Supabase | 100% | [email] |
+| 3 | Nguyễn Hữu Quân | 2351170612 | 65KTPM | Thành viên | Quét vở, OCR bằng ML Kit, đóng gói APK và CI release | 100% | nguyenhuuquan01122k5@gmail.com |
+| 4 | Mông Thị Bích Hạnh | 2251061770 | 65KTPM | Thành viên | Phân loại theo môn học và tag, nhắc nhở học tập, thống kê streak, tài liệu và báo cáo | 100% | [email] |
+| 5 | Nguyễn Tiến Đạt | 2251161967 | 65KTPM | Thành viên | Ghi chú CRUD và tự lưu, UI/UX nền tảng, xuất Word, bài kiểm tra trắc nghiệm AI | 100% | [email] |
+
+> Ghi chú: ô Email của 4 thành viên cần được điền đúng **email đã đăng ký GitHub** (yêu cầu `README.md` §5.2) trước khi nộp bài.
 
 ## 2. Phân Công Theo Thành Viên
 
@@ -58,7 +60,50 @@
 ## 4. Quy Ước Làm Việc Nhóm
 
 1. Mỗi đầu việc tương ứng **một issue** trên repo, gắn nhãn `area:*`, `priority:*`, `sprint:*`.
-2. Mỗi người có **một nhánh cá nhân** `dev/<ten>` (ví dụ `dev/minh`), tạo một lần từ `nhom03-65ktpm` và dùng chung cho mọi issue của mình.
-3. Commit theo Conventional Commits và **đúng tài khoản GitHub của thành viên** (xem [rules/AGENTS.md](project-ptuddd/nhom03-65ktpm/rules/AGENTS.md)).
+2. Mỗi người làm việc trên **nhánh phụ theo đúng định dạng của môn học** (`README.md` §7.1): `feature/nhom03-65ktpm/<tinh-nang>`, tạo từ nhánh `nhom03-65ktpm`.
+3. Commit theo Conventional Commits và **đúng tài khoản GitHub của thành viên** (xem [rules/AGENTS.md](rules/AGENTS.md)).
 4. Mở Pull Request vào `nhom03-65ktpm`, mô tả có `Closes #<số issue>`, nhóm trưởng review rồi merge.
 5. Cập nhật `Status` trên board: **In Progress** khi bắt đầu, **Done** khi PR được merge.
+
+## 5. Hướng Dẫn Thiết Lập Môi Trường Và Khởi Chạy Ứng Dụng
+
+### Yêu cầu
+- **Flutter SDK 3.47.5** (khai báo trong `src/.fvmrc`; khuyến nghị dùng [FVM](https://fvm.app/)) — Dart `^3.13.2`
+- Android Studio (kèm Android SDK) hoặc Xcode (tuỳ nền tảng chạy)
+- Git, tài khoản GitHub đã được thêm làm Collaborator của kho fork nhóm
+
+### Các bước khởi chạy
+
+```bash
+# 1. Clone kho fork của nhóm và chuyển sang nhánh nhóm
+git clone https://github.com/Minh-lab/project-ptuddd.git
+cd project-ptuddd
+git checkout --track origin/nhom03-65ktpm
+
+# 2. Vào thư mục mã nguồn
+cd nhom03-65ktpm/src
+
+# 3. Cài Flutter theo phiên bản của dự án (nếu dùng FVM)
+fvm install
+fvm use
+
+# 4. Tải gói phụ thuộc
+fvm flutter pub get
+
+# 5. Tạo file cấu hình môi trường từ mẫu rồi điền khoá
+cp .env.example .env
+
+# 6. Chạy ứng dụng trên thiết bị/emulator
+fvm flutter run
+
+# 7. Chạy kiểm thử
+fvm flutter test
+
+# 8. Đóng gói APK debug (kiểm tra build)
+fvm flutter build apk --debug
+```
+
+### Cấu hình môi trường
+- **Firebase Auth:** dùng project Firebase của nhóm; file `google-services.json` / `GoogleService-Info.plist` **không commit** (chứa khoá riêng), mỗi thành viên tự tải về đặt đúng vị trí.
+- **Supabase:** điền `SUPABASE_URL` và `SUPABASE_ANON_KEY` trong `.env` (mẫu ở `.env.example`); khoá `service_role` **tuyệt đối không** đưa vào app.
+- Chi tiết schema Supabase xem [docs/co_so_du_lieu.md](docs/co_so_du_lieu.md).

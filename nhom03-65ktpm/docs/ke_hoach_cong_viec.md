@@ -10,7 +10,7 @@
 
 1. Mỗi đầu việc tương ứng **một issue** trong repo (đã tạo 22 issue, gắn nhãn `area:*`, `priority:*`, `sprint:*` và milestone theo sprint).
 2. Issue được đưa vào **Project board** với các trường `Status` (Todo → In Progress → Done), `Sprint` (S1–S4), `Priority` (P0/P1).
-3. Mỗi thành viên làm việc trên **một nhánh cá nhân** `dev/<ten>` (ví dụ `dev/minh`), tạo một lần từ `nhom03-65ktpm` và dùng cho mọi issue của mình; commit theo Conventional Commits có ghi số issue.
+3. Mỗi thành viên làm việc trên **nhánh phụ theo đúng định dạng của môn học** (`README.md` §7.1): `feature/nhom03-65ktpm/<tinh-nang>`, tạo từ `nhom03-65ktpm`; commit theo Conventional Commits có ghi số issue.
 4. Mở Pull Request vào `nhom03-65ktpm`, mô tả có `Closes #<số issue>` để tự đóng issue khi merge; nhóm trưởng review rồi merge.
 5. Cập nhật `Status` trên board: kéo sang **In Progress** khi bắt đầu, **Done** khi PR được merge.
 
