@@ -2,7 +2,8 @@
 
 - **Repo quản lý:** https://github.com/Minh-lab/project-ptuddd (nhánh `nhom03-65ktpm`)
 - **Bảng tiến độ:** https://github.com/users/Minh-lab/projects/6
-- **Thời gian:** 16/11/2026 – 10/01/2027 (08 tuần, 4 sprint)
+- **Thời gian:** 16/11/2026 – 28/11/2026 (02 tuần, 4 sprint)
+- **Hạn nộp (deadline):** **28/11/2026**
 
 ## 1. Quy trình làm việc trên GitHub
 
@@ -43,10 +44,10 @@
 
 | Sprint | Thời gian | Mục tiêu | Issue |
 | --- | --- | --- | --- |
-| S1 | 16/11 – 29/11 | Khung dự án, auth, ghi chú CRUD, UI nền tảng | #1 – #4 |
-| S2 | 30/11 – 13/12 | Môn học/tag, tìm kiếm, quét vở + OCR, nhắc nhở | #5 – #10 |
-| S3 | 14/12 – 27/12 | Xuất Word, tóm tắt AI, bài kiểm tra AI, chia sẻ, Web | #11 – #15 |
-| S4 | 28/12 – 10/01 | Sao lưu, kiểm thử, đóng gói APK, tài liệu, demo | #16 – #22 |
+| S1 | 16/11 – 19/11 | Khung dự án, auth, ghi chú CRUD, UI nền tảng | #1 – #4 |
+| S2 | 20/11 – 22/11 | Môn học/tag, tìm kiếm, quét vở + OCR, nhắc nhở | #5 – #10 |
+| S3 | 23/11 – 25/11 | Xuất Word, tóm tắt AI, bài kiểm tra AI, chia sẻ, Web | #11 – #15 |
+| S4 | 26/11 – 28/11 | Sao lưu, kiểm thử, đóng gói APK, tài liệu, demo | #16 – #22 |
 
 ## 4. Tiêu chí hoàn thành (Definition of Done)
 
