@@ -167,36 +167,42 @@ Quy chuẩn của giảng viên nằm ở [`README.md`](../../README.md) — **p
 - **Cấu trúc thư mục nhóm** giữ đúng quy định: `nhom03-65ktpm/{danhsachnhom.md, README.md, docs/, rules/, src/}`.
 - **Khi nộp bài:** PR từ nhánh `nhom03-65ktpm` của repo fork về `main` của repo gốc, tiêu đề `[Nộp bài] nhom03-65ktpm - NoteSmart`.
 
-## 8. Quy trình làm việc với Git: mỗi người MỘT nhánh riêng
+## 8. Quy trình làm việc với Git: nhánh phụ theo tính năng
 
-**Mỗi thành viên có duy nhất một nhánh cá nhân `dev/<ten>`, tạo một lần và dùng cho toàn bộ đồ án.**
-Tất cả issue của một người đều commit lên **cùng một nhánh đó**. Không ai code trực tiếp trên `nhom03-65ktpm`.
+**Tên nhánh phải theo đúng định dạng của môn học** — [`README.md`](../../README.md) §7.1:
 
-| Thành viên | Nhánh cá nhân |
-|---|---|
-| Nguyễn Minh | `dev/minh` |
-| Nguyễn Tiến Đạt | `dev/dat` |
-| Mông Thị Bích Hạnh | `dev/hanh` |
-| Nguyễn Hữu Quân | `dev/quan` |
-| Dương Hải Đăng | `dev/dang` |
+```text
+feature/<tennhom>/<tinh-nang>
+```
+
+Với nhóm này: `<tennhom>` = `nhom03-65ktpm`, `<tinh-nang>` = tên tính năng viết thường, không dấu, gạch nối.
+**Không** dùng `dev/<ten>`, `feature/<số-issue>`, `feature/<ten-nguoi>` hay nhánh mang tên cá nhân — sai định dạng là sai yêu cầu môn học.
+
+| Thành viên | Nhánh phụ (ví dụ đúng định dạng) | Issue phụ trách |
+|---|---|---|
+| Nguyễn Minh | `feature/nhom03-65ktpm/khoi-tao-du-an`, `feature/nhom03-65ktpm/auth`, `feature/nhom03-65ktpm/nhat-ky`, `feature/nhom03-65ktpm/tom-tat-ai` | #1, #2, #5, #12, #21 |
+| Nguyễn Tiến Đạt | `feature/nhom03-65ktpm/ghi-chu-crud`, `feature/nhom03-65ktpm/ui-nen-tang`, `feature/nhom03-65ktpm/xuat-word`, `feature/nhom03-65ktpm/trac-nghiem-ai` | #3, #4, #11, #13 |
+| Mông Thị Bích Hạnh | `feature/nhom03-65ktpm/phan-loai-mon-hoc`, `feature/nhom03-65ktpm/nhac-nho`, `feature/nhom03-65ktpm/thong-ke-streak`, `feature/nhom03-65ktpm/tai-lieu-bao-cao` | #6, #10, #17, #20 |
+| Nguyễn Hữu Quân | `feature/nhom03-65ktpm/quet-vo`, `feature/nhom03-65ktpm/ocr-ml-kit`, `feature/nhom03-65ktpm/dong-goi-apk` | #8, #9, #19 |
+| Dương Hải Đăng | `feature/nhom03-65ktpm/tim-kiem`, `feature/nhom03-65ktpm/chia-se-ghi-chu`, `feature/nhom03-65ktpm/sao-luu-supabase` | #7, #14, #16, #22 |
 
 ```bash
 # 1. Cập nhật nhánh nhóm trước khi bắt đầu (làm mỗi ngày)
 git switch nhom03-65ktpm
 git pull origin nhom03-65ktpm
 
-# 2. Tạo nhánh cá nhân — CHỈ MỘT LẦN duy nhất cho cả đồ án
-git switch -c dev/minh
-git push -u origin dev/minh
+# 2. Tạo nhánh phụ từ nhánh nhóm, đúng định dạng feature/<tennhom>/<tinh-nang>
+git switch -c feature/nhom03-65ktpm/ghi-chu-crud
+git push -u origin feature/nhom03-65ktpm/ghi-chu-crud
 
-# 3. Làm lần lượt nhiều issue trên cùng nhánh này, commit theo mục 1–5
+# 3. Code + commit theo mục 1–5, ghi số issue ở cuối message
 
-# 4. Khi một hoặc vài issue đã xong, mở MỘT PR vào nhánh nhóm
-gh pr create --base nhom03-65ktpm --body "Closes #1
-Closes #2"
+# 4. Xong tính năng, mở PR vào nhánh nhóm (không push thẳng vào nhóm)
+gh pr create --base nhom03-65ktpm --body "Closes #3"
 ```
 
-- **Không tạo nhánh mới cho từng issue**, không dùng `feature/<số-issue>`; **không xoá rồi tạo lại** nhánh cá nhân sau mỗi PR — giữ nguyên nhánh đến hết đồ án.
+- **Mỗi nhánh phụ gắn với một tính năng**: gộp các issue của cùng một tính năng vào một nhánh; làm tính năng khác hẳn thì tạo nhánh phụ mới cùng định dạng — không mở nhánh mới cho từng issue nhỏ.
+- **Tên nhánh không chứa tên AI assistant**, không dấu, không khoảng trắng, không viết hoa.
 - **Truy vết issue bằng commit message:** thêm số issue vào cuối tiêu đề, ví dụ
   `feat(notes): them CRUD ghi chu (#3)`, `fix(auth): xu ly mat mang (#2)`.
 - **PR gộp nhiều issue:** liệt kê **tất cả** `Closes #n` trong mô tả, mỗi issue một dòng.
@@ -204,10 +210,10 @@ Closes #2"
 - **Trước khi mở PR:** `git fetch origin && git rebase origin/nhom03-65ktpm` để tránh conflict muộn.
 - **PR phải có:** mô tả ngắn, danh sách `Closes #…`, ảnh chụp màn hình nếu là UI, xác nhận đã chạy analyze + test.
 - **Review:** nhóm trưởng (`Minh-lab`) review và merge. Không tự merge PR của chính mình khi chưa được review.
-- **Sau khi merge:** **không xoá nhánh**, chỉ `git fetch origin && git rebase origin/nhom03-65ktpm` rồi làm tiếp issue kế tiếp trên cùng `dev/<ten>`; chuyển `Status` các issue đã xong sang **Done**.
-- **Sửa lỗi gấp cũng dùng nhánh cá nhân**, không tạo `hotfix/...` mới.
-- **Không push vào nhánh của người khác.** **Không force push** lên `main`, `nhom03-65ktpm`, `dev/<ten>` của người khác hay nhánh nhóm.
-- **Nhánh cá nhân có thể lệch sau nhiều ngày:** luôn rebase từ `origin/nhom03-65ktpm` trước khi push để tránh `non-fast-forward`.
+- **Sau khi merge:** `git fetch origin && git switch nhom03-65ktpm && git pull`, rồi tạo nhánh phụ mới cho tính năng kế tiếp; chuyển `Status` các issue đã xong sang **Done**.
+- **Sửa lỗi gấp cũng dùng nhánh phụ** `feature/nhom03-65ktpm/<tinh-nang>`, không tạo `hotfix/...`.
+- **Không push vào nhánh của người khác.** **Không force push** lên `main`, `nhom03-65ktpm` hay nhánh của người khác.
+- **Nhánh phụ có thể lệch sau nhiều ngày:** luôn rebase từ `origin/nhom03-65ktpm` trước khi push để tránh `non-fast-forward`.
 
 ## 9. Kiến trúc code: Clean Architecture
 
@@ -218,11 +224,11 @@ nhom03-65ktpm/src/lib/
 ├── main.dart                 # chỉ khởi tạo app + DI
 ├── app.dart                  # MaterialApp, theme, router
 ├── core/                     # dùng chung toàn app
-│   ├── database/             # Drift: AppDatabase, bảng, DAO
+│   ├── database/             # Drift: AppDatabase, bảng, DAO (cache cục bộ)
 │   ├── di/                   # đăng ký dependency
 │   ├── error/                # Failure / exception
 │   ├── routing/              # khai báo route
-│   ├── services/             # HTTP client, AI client, file, share...
+│   ├── services/             # SupabaseClient, FirebaseAuth, AI client, file, share...
 │   ├── theme/
 │   └── utils/
 └── features/
@@ -232,7 +238,7 @@ nhom03-65ktpm/src/lib/
         │   ├── repositories/
         │   └── usecases/
         ├── data/             # model, datasource, repository impl
-        │   ├── datasources/
+        │   ├── datasources/  # local/ (Drift) và remote/ (Supabase, Firebase)
         │   ├── models/
         │   └── repositories/
         └── presentation/     # bloc/cubit, page, widget
@@ -247,6 +253,24 @@ Quy tắc phụ thuộc (dependency rule) — **chỉ được trỏ vào trong*
 |---|---|---|
 | `domain` | Dart thuần, entity/usecase của chính nó | `flutter/material.dart`, Firebase, Drift, HTTP, bất kỳ package ngoài |
 | `data` | `domain` của chính feature, package hạ tầng (Drift, Firebase, Supabase) | `presentation` |
+
+### Hạ tầng dữ liệu (quyết định của nhóm — bắt buộc)
+
+| Mục đích | Dịch vụ | Ghi chú |
+|---|---|---|
+| Đăng nhập / đăng ký / phiên | **Firebase Authentication** | Chỉ dùng Auth; **không** dùng Firestore/Realtime DB làm nơi lưu dữ liệu chính |
+| Lưu dữ liệu chung của cả nhóm | **Supabase** (PostgreSQL + Storage) | Nguồn dữ liệu chính (source of truth); ảnh quét lưu ở Storage |
+| Cache offline trên máy | **Drift (SQLite)** | Chỉ là bản sao cục bộ để dùng khi mất mạng, không phải nơi lưu chính |
+
+Quy tắc kèm theo:
+
+- Client chỉ dùng **`anon` key** của Supabase và **bật RLS** cho mọi bảng; **tuyệt đối không** nhúng `service_role` key vào app.
+- Mọi bảng dữ liệu phải có cột `user_id` kiểu **`text`** chứa **Firebase UID** (UID Firebase không phải UUID, nên **không** dùng `auth.uid()`).
+- RLS so sánh bằng claim `sub`: `user_id = (select auth.jwt() ->> 'sub')`; phải bật integration **Third-party auth → Firebase** trong Supabase và gán custom claim `role = authenticated` cho user Firebase (nếu không request chạy như `anon` và bị RLS từ chối).
+- Client Supabase phải truyền token Firebase (`accessToken` callback → `getIdToken()`), không tạo phiên đăng nhập riêng trên Supabase.
+- **Schema và policy đã chốt nằm ở [`docs/co_so_du_lieu.md`](../docs/co_so_du_lieu.md)** — mọi thành viên và agent **phải đọc file này trước khi thêm/sửa bảng, cột, index hay policy**; thay đổi schema phải cập nhật lại file đó và báo nhóm.
+- Truy cập Supabase/Firebase **chỉ từ `data/datasources/remote/`**, không gọi trong `presentation`.
+- Không tạo hai nguồn dữ liệu chính song song: ghi vào Supabase là chính, Drift cập nhật sau (offline-first).
 | `presentation` | `domain` (usecase), `core/theme`, `core/routing`, widget dùng chung | Gọi trực tiếp `FirebaseAuth`, `AppDatabase`, HTTP client |
 
 Quy tắc khác:
@@ -284,12 +308,12 @@ Quy tắc khác:
 ## 11. Quy trình làm một issue
 
 1. **Nhận issue:** đọc mô tả + tiêu chí hoàn thành trên GitHub, kéo `Status` sang **In Progress**.
-2. **Chuyển sang nhánh cá nhân `dev/<ten>`** của mình (tạo một lần duy nhất ở mục 8), rebase từ `origin/nhom03-65ktpm` mới nhất.
+2. **Chuyển sang nhánh phụ `feature/nhom03-65ktpm/<tinh-nang>`** của tính năng đang làm (tạo theo mục 8 nếu chưa có), rebase từ `origin/nhom03-65ktpm` mới nhất.
 3. **Code theo kiến trúc** ở mục 9, giữ commit nhỏ và có ý nghĩa (mỗi commit một việc).
 4. **Tự kiểm tra:** `dart format`, `flutter analyze`, `flutter test` (mục 10).
 5. **Trình commit message chờ xác nhận** rồi mới commit/push (mục 2).
-6. **Khi xong một hoặc vài issue**, mở **một PR** từ `dev/<ten>` vào `nhom03-65ktpm`, liệt kê `Closes #…` cho từng issue.
-7. **Nhận review**, sửa theo góp ý, merge (nhóm trưởng). **Không xoá nhánh** — rebase lại và tiếp tục issue sau trên cùng nhánh.
+6. **Khi xong tính năng**, mở **một PR** từ `feature/nhom03-65ktpm/<tinh-nang>` vào `nhom03-65ktpm`, liệt kê `Closes #…` cho từng issue.
+7. **Nhận review**, sửa theo góp ý, merge (nhóm trưởng). Sau khi merge có thể xoá nhánh phụ đã xong; tính năng tiếp theo tạo nhánh phụ mới đúng định dạng.
 8. **Cập nhật board:** `Status = Done`; nếu có thay đổi phạm vi thì ghi chú lại trong issue.
 
 Nếu không kịp deadline: báo nhóm trưởng sớm và **ghi rõ lý do trong issue**, không tự ý đổi milestone hay đóng issue khi chưa xong.
