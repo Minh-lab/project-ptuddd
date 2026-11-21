@@ -1,7 +1,7 @@
 # Cơ Sở Dữ Liệu – Nhóm 03 (SmartNote)
 
 > **Đọc file này trước khi thêm/sửa bảng, cột hay policy.** Áp dụng cho mọi thành viên và mọi agent AI (xem [rules/AGENTS.md](../rules/AGENTS.md)).
-> Trạng thái: **21/11/2026** · Người phụ trách schema: Nguyễn Minh (`Minh-lab`).
+> Cập nhật: **21/11/2026**.
 
 ## 1. Hạ tầng dữ liệu
 
@@ -33,48 +33,35 @@
 | Đặt tên ràng buộc | `<bảng>_<cột>_<loại>` khi cần unique/foreign key |
 | Thay đổi schema | Có file SQL trong `docs/sql/` + cập nhật file này + báo nhóm |
 
-## 3. Trạng thái các bảng
+## 3. Danh sách bảng
 
-| Bảng | Trạng thái | Issue | Phụ trách |
-|---|---|---|---|
-| `profiles` | 🚧 đang làm | #2 | Minh |
-| `subjects` | ✅ đã tạo (SQL bên dưới) | #6 | Hạnh |
-| `notes` | ✅ đã tạo (SQL bên dưới) | #3 | Đạt |
-| `note_attachments` | 📋 đề xuất | #8, #9 | Quân |
-| `reminders` | 📋 đề xuất | #10 | Hạnh |
-| `summaries` | 📋 đề xuất | #12 | Minh |
-| `quizzes` / `quiz_questions` / `quiz_attempts` | 📋 đề xuất | #13 | Đạt |
-| `note_shares` | 📋 đề xuất | #14 | Đăng |
-| `study_stats` | 📋 đề xuất | #17 | Hạnh |
+| Bảng | Mô tả | Issue |
+|---|---|---|
+| `profiles` | Hồ sơ người dùng | #2 |
+| `subjects` | Môn học / chủ đề phân loại ghi chú | #6 |
+| `notes` | Ghi chú thường và nhật ký | #3 |
+| `note_attachments` | Ảnh quét vở, tệp đính kèm | #8, #9 |
+| `reminders` | Nhắc hẹn theo ghi chú | #10 |
+| `summaries` | Kết quả tóm tắt AI | #12 |
+| `quizzes` / `quiz_questions` / `quiz_attempts` | Bài kiểm tra trắc nghiệm và điểm | #13 |
+| `note_shares` | Chia sẻ ghi chú chỉ xem | #14 |
+| `study_stats` | Thống kê học tập / streak | #17 |
 
-Chú thích: ✅ đã tạo trên Supabase · 🚧 đang làm · 📋 mới là đề xuất, **phải chốt lại trước khi code**.
+Dưới đây là **cấu trúc cơ bản** để cả nhóm code khớp nhau. Trong quá trình làm, người làm issue được **tự bổ sung cột** (ví dụ `updated_at`, `deleted_at`, cờ trạng thái, metadata) miễn giữ đúng quy ước ở mục 2 và cập nhật lại file này.
 
-## 4. Bảng đã tạo (SQL chuẩn)
+## 4. Cấu trúc cơ bản các bảng
 
 ```sql
 -- =========================================================
--- notes: ghi chú thường (kind = 'note') và nhật ký (kind = 'diary')
+-- profiles: hồ sơ người dùng (1 dòng / tài khoản Firebase)
 -- =========================================================
-create table if not exists notes (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     text not null,                                  -- Firebase UID
-  title       text not null default '',
-  content     text not null default '',
-  subject_id  uuid references subjects(id) on delete set null,
-  tags        text[] not null default '{}',
-  kind        text not null default 'note' check (kind in ('note', 'diary')),
-  created_at  timestamptz not null default now(),
-  updated_at  timestamptz not null default now(),
-  deleted_at  timestamptz
+create table if not exists profiles (
+  user_id      text primary key,               -- Firebase UID
+  display_name text,
+  email        text,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
 );
-
-create index if not exists notes_user_updated_idx
-  on notes (user_id, updated_at desc);
-
--- Mỗi người chỉ có một nhật ký mỗi ngày (theo giờ Việt Nam)
-create unique index if not exists notes_one_diary_per_day
-  on notes (user_id, ((created_at at time zone 'Asia/Ho_Chi_Minh')::date))
-  where kind = 'diary' and deleted_at is null;
 
 -- =========================================================
 -- subjects: môn học / chủ đề để phân loại ghi chú
@@ -88,15 +75,147 @@ create table if not exists subjects (
   updated_at timestamptz not null default now(),
   deleted_at timestamptz
 );
+
+-- =========================================================
+-- notes: ghi chú thường (kind = 'note') và nhật ký (kind = 'diary')
+-- =========================================================
+create table if not exists notes (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    text not null,                    -- Firebase UID
+  title      text not null default '',
+  content    text not null default '',
+  subject_id uuid references subjects(id) on delete set null,
+  tags       text[] not null default '{}',
+  kind       text not null default 'note' check (kind in ('note', 'diary')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  deleted_at timestamptz
+);
+
+create index if not exists notes_user_updated_idx
+  on notes (user_id, updated_at desc);
+
+-- Mỗi người chỉ có một nhật ký mỗi ngày (theo giờ Việt Nam)
+create unique index if not exists notes_one_diary_per_day
+  on notes (user_id, ((created_at at time zone 'Asia/Ho_Chi_Minh')::date))
+  where kind = 'diary' and deleted_at is null;
+
+-- =========================================================
+-- note_attachments: ảnh quét vở / tệp đính kèm của ghi chú
+-- =========================================================
+create table if not exists note_attachments (
+  id           uuid primary key default gen_random_uuid(),
+  note_id      uuid not null references notes(id) on delete cascade,
+  user_id      text not null,
+  storage_path text not null,                  -- đường dẫn trong bucket
+  page_order   int not null default 0,
+  ocr_text     text,
+  created_at   timestamptz not null default now()
+);
+
+-- =========================================================
+-- reminders: nhắc hẹn theo ghi chú
+-- =========================================================
+create table if not exists reminders (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    text not null,
+  note_id    uuid references notes(id) on delete cascade,
+  remind_at  timestamptz not null,
+  is_done    boolean not null default false,
+  created_at timestamptz not null default now()
+);
+
+-- =========================================================
+-- summaries: kết quả tóm tắt AI (không ghi đè notes.content)
+-- =========================================================
+create table if not exists summaries (
+  id         uuid primary key default gen_random_uuid(),
+  note_id    uuid not null references notes(id) on delete cascade,
+  user_id    text not null,
+  mode       text not null check (mode in ('short', 'long', 'bullets')),
+  content    text not null,
+  model      text,
+  created_at timestamptz not null default now()
+);
+
+-- =========================================================
+-- quizzes / quiz_questions / quiz_attempts: bài kiểm tra trắc nghiệm
+-- =========================================================
+create table if not exists quizzes (
+  id         uuid primary key default gen_random_uuid(),
+  note_id    uuid references notes(id) on delete set null,
+  user_id    text not null,
+  title      text not null default '',
+  created_at timestamptz not null default now()
+);
+
+create table if not exists quiz_questions (
+  id         uuid primary key default gen_random_uuid(),
+  quiz_id    uuid not null references quizzes(id) on delete cascade,
+  question   text not null,
+  options    jsonb not null,                   -- ["A", "B", ...]
+  answer_idx int not null,
+  order_idx  int not null default 0
+);
+
+create table if not exists quiz_attempts (
+  id         uuid primary key default gen_random_uuid(),
+  quiz_id    uuid not null references quizzes(id) on delete cascade,
+  user_id    text not null,
+  score      int not null,
+  total      int not null,
+  answers    jsonb,
+  created_at timestamptz not null default now()
+);
+
+-- =========================================================
+-- note_shares: chia sẻ ghi chú chỉ xem
+-- =========================================================
+create table if not exists note_shares (
+  id          uuid primary key default gen_random_uuid(),
+  note_id     uuid not null references notes(id) on delete cascade,
+  owner_id    text not null,
+  shared_with text not null,                   -- Firebase UID người được xem
+  permission  text not null default 'view' check (permission in ('view')),
+  created_at  timestamptz not null default now(),
+  unique (note_id, shared_with)
+);
+
+-- =========================================================
+-- study_stats: thống kê học tập / streak theo ngày
+-- =========================================================
+create table if not exists study_stats (
+  user_id    text not null,
+  day        date not null,
+  note_count int not null default 0,
+  diary_done boolean not null default false,
+  primary key (user_id, day)
+);
 ```
 
-### RLS cho hai bảng trên
+Ghi chú:
+- `study_stats` có thể tính trực tiếp từ `notes` thay vì lưu bảng riêng — chốt lại khi làm #17.
+- `note_shares` cần thêm nhánh policy: người được chia sẻ `select` được `notes` khi có dòng trong `note_shares`.
+
+## 5. RLS cho toàn bộ bảng
 
 ```sql
-alter table notes    enable row level security;
-alter table subjects enable row level security;
+alter table profiles         enable row level security;
+alter table subjects         enable row level security;
+alter table notes            enable row level security;
+alter table note_attachments enable row level security;
+alter table reminders        enable row level security;
+alter table summaries        enable row level security;
+alter table quizzes          enable row level security;
+alter table quiz_questions   enable row level security;
+alter table quiz_attempts    enable row level security;
+alter table note_shares      enable row level security;
+alter table study_stats      enable row level security;
 
-grant select, insert, update, delete on notes, subjects to authenticated;
+grant select, insert, update, delete on
+  profiles, subjects, notes, note_attachments, reminders, summaries,
+  quizzes, quiz_questions, quiz_attempts, note_shares, study_stats
+  to authenticated;
 
 create policy "notes_owner" on notes
   for all to authenticated
@@ -109,114 +228,7 @@ create policy "subjects_owner" on subjects
   with check (user_id = (select auth.jwt() ->> 'sub'));
 ```
 
-## 5. Bảng đề xuất (chưa tạo — chốt với người phụ trách trước khi dùng)
-
-> Đây là đề xuất để cả nhóm thống nhất sớm. Người phụ trách issue có thể sửa cột, **nhưng phải cập nhật file này** trước khi merge.
-
-### `profiles` (#2)
-```sql
-create table profiles (
-  user_id      text primary key,              -- Firebase UID
-  display_name text,
-  email        text,
-  created_at   timestamptz not null default now(),
-  updated_at   timestamptz not null default now()
-);
-```
-
-### `note_attachments` (#8, #9) — ảnh quét vở
-```sql
-create table note_attachments (
-  id          uuid primary key default gen_random_uuid(),
-  note_id     uuid not null references notes(id) on delete cascade,
-  user_id     text not null,
-  storage_path text not null,                 -- đường dẫn trong bucket
-  page_order  int  not null default 0,
-  ocr_text    text,                           -- kết quả OCR
-  created_at  timestamptz not null default now()
-);
-```
-
-### `reminders` (#10)
-```sql
-create table reminders (
-  id         uuid primary key default gen_random_uuid(),
-  user_id    text not null,
-  note_id    uuid references notes(id) on delete cascade,
-  remind_at  timestamptz not null,
-  is_done    boolean not null default false,
-  created_at timestamptz not null default now()
-);
-```
-
-### `summaries` (#12) — kết quả tóm tắt AI
-```sql
-create table summaries (
-  id         uuid primary key default gen_random_uuid(),
-  note_id    uuid not null references notes(id) on delete cascade,
-  user_id    text not null,
-  mode       text not null check (mode in ('short', 'long', 'bullets')),
-  content    text not null,                   -- kết quả trả về, KHÔNG ghi đè notes.content
-  model      text,
-  created_at timestamptz not null default now()
-);
-```
-
-### `quizzes` / `quiz_questions` / `quiz_attempts` (#13)
-```sql
-create table quizzes (
-  id         uuid primary key default gen_random_uuid(),
-  note_id    uuid references notes(id) on delete set null,
-  user_id    text not null,
-  title      text not null default '',
-  created_at timestamptz not null default now()
-);
-
-create table quiz_questions (
-  id         uuid primary key default gen_random_uuid(),
-  quiz_id    uuid not null references quizzes(id) on delete cascade,
-  question   text not null,
-  options    jsonb not null,                  -- ["A", "B", ...]
-  answer_idx int not null,
-  order_idx  int not null default 0
-);
-
-create table quiz_attempts (
-  id         uuid primary key default gen_random_uuid(),
-  quiz_id    uuid not null references quizzes(id) on delete cascade,
-  user_id    text not null,
-  score      int not null,
-  total      int not null,
-  answers    jsonb,
-  created_at timestamptz not null default now()
-);
-```
-
-### `note_shares` (#14) — chia sẻ chỉ xem
-```sql
-create table note_shares (
-  id         uuid primary key default gen_random_uuid(),
-  note_id    uuid not null references notes(id) on delete cascade,
-  owner_id   text not null,
-  shared_with text not null,                  -- Firebase UID người được xem
-  permission text not null default 'view' check (permission in ('view')),
-  created_at timestamptz not null default now(),
-  unique (note_id, shared_with)
-);
-```
-Policy cần thêm nhánh: người được chia sẻ `select` được `notes` khi có dòng trong `note_shares`.
-
-### `study_stats` (#17) — thống kê/streak
-```sql
-create table study_stats (
-  user_id      text not null,
-  day          date not null,
-  note_count   int not null default 0,
-  diary_done   boolean not null default false,
-  primary key (user_id, day)
-);
-```
-Có thể tính từ `notes` thay vì lưu bảng riêng — chốt với Hạnh trước khi tạo.
+Các bảng còn lại viết policy theo cùng mẫu khi làm issue tương ứng. Bảng có cha (`note_attachments`, `reminders`, `summaries`, `quiz_questions`, `quiz_attempts`, `note_shares`) phải kiểm tra quyền qua bảng cha nếu không có cột `user_id` trực tiếp.
 
 ## 6. Storage
 
@@ -241,7 +253,7 @@ Quy tắc đồng bộ: ghi Supabase trước → cập nhật Drift; khi mất 
 
 1. Đọc file này và [rules/AGENTS.md](../rules/AGENTS.md).
 2. Tạo file SQL trong `docs/sql/<YYYYMMDD>_<mô-tả>.sql` (không sửa file SQL cũ).
-3. Thêm bảng vào mục **3. Trạng thái** và SQL vào mục **4 hoặc 5**.
+3. Thêm bảng vào mục **3. Danh sách bảng** và SQL vào mục **4**.
 4. Luôn: `user_id`, `created_at`, `updated_at`, `deleted_at`, `enable row level security`, `grant ... to authenticated`, policy.
 5. Cập nhật tầng Drift + `data/datasources/remote` tương ứng.
 6. Ghi vào **mục 9. Lịch sử thay đổi**.
@@ -249,6 +261,7 @@ Quy tắc đồng bộ: ghi Supabase trước → cập nhật Drift; khi mất 
 
 ## 9. Lịch sử thay đổi
 
-| Ngày | Người | Nội dung |
-|---|---|---|
-| 21/11/2026 | Minh | Tạo file; chốt `notes`, `subjects`, RLS theo Firebase UID; đề xuất các bảng còn lại |
+| Ngày | Nội dung |
+|---|---|
+| 21/11/2026 | Tạo file; chốt `notes`, `subjects`, RLS theo Firebase UID; đề xuất các bảng còn lại |
+| 21/11/2026 | Bỏ cột trạng thái và phân công; viết cấu trúc field cơ bản cho toàn bộ bảng, thành viên tự bổ sung khi làm |
