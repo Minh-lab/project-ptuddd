@@ -105,5 +105,14 @@ fvm flutter build apk --debug
 
 ### Cấu hình môi trường
 - **Firebase Auth:** dùng project Firebase của nhóm; file `google-services.json` / `GoogleService-Info.plist` **không commit** (chứa khoá riêng), mỗi thành viên tự tải về đặt đúng vị trí.
+  Nếu chưa có file cấu hình, truyền thẳng khoá khi chạy (không lưu vào mã nguồn):
+  ```bash
+  fvm flutter run \
+    --dart-define=FIREBASE_API_KEY=... \
+    --dart-define=FIREBASE_APP_ID=... \
+    --dart-define=FIREBASE_MESSAGING_SENDER_ID=... \
+    --dart-define=FIREBASE_PROJECT_ID=...
+  ```
+  Bật **Authentication → Sign-in method → Email/Password** trong Firebase Console trước khi đăng nhập thử; nếu chưa cấu hình, app hiện màn hình "Chưa cấu hình Firebase" thay vì crash.
 - **Supabase:** điền `SUPABASE_URL` và `SUPABASE_ANON_KEY` trong `.env` (mẫu ở `.env.example`); khoá `service_role` **tuyệt đối không** đưa vào app.
 - Chi tiết schema Supabase xem [docs/co_so_du_lieu.md](docs/co_so_du_lieu.md).

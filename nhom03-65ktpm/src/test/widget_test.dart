@@ -3,26 +3,35 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_note/app.dart';
 import 'package:smart_note/core/di/app_dependencies.dart';
+import 'package:smart_note/features/auth/domain/entities/app_user.dart';
+
+import 'support/fake_auth_repository.dart';
 
 void main() {
-  testWidgets(
-    'SmartNote hiển thị tiêu đề và trạng thái rỗng khi chưa có ghi chú',
-    (WidgetTester tester) async {
-      final dependencies = AppDependencies.create(
-        executor: NativeDatabase.memory(),
-      );
+  testWidgets('Đã có phiên đăng nhập thì vào thẳng màn hình chính', (
+    WidgetTester tester,
+  ) async {
+    final authRepository = FakeAuthRepository(
+      initialUser: const AppUser(id: 'uid-1', email: 'minh@example.com'),
+    );
+    final dependencies = AppDependencies.create(
+      executor: NativeDatabase.memory(),
+      authRepository: authRepository,
+    );
 
-      await tester.pumpWidget(SmartNoteApp(dependencies: dependencies));
-      await tester.pumpAndSettle();
+    await tester.pumpWidget(SmartNoteApp(dependencies: dependencies));
+    await tester.pumpAndSettle();
 
-      expect(find.text('SmartNote'), findsOneWidget);
-      expect(find.text('Chưa có ghi chú nào'), findsOneWidget);
+    expect(find.text('SmartNote'), findsOneWidget);
+    // Đã đăng nhập nên không hiện màn đăng nhập.
+    expect(find.text('Đăng nhập để đồng bộ ghi chú của bạn'), findsNothing);
+    expect(find.text('Chưa có ghi chú nào'), findsOneWidget);
 
-      // Gỡ widget để BlocProvider đóng NotesCubit (huỷ subscription) rồi đóng
-      // database, tránh lỗi "Timer is still pending" khi test kết thúc.
-      await tester.pumpWidget(const SizedBox.shrink());
-      await tester.pumpAndSettle();
-      await tester.runAsync(dependencies.dispose);
-    },
-  );
+    // Gỡ widget để BlocProvider đóng cubit (huỷ subscription) rồi đóng
+    // database, tránh lỗi "Timer is still pending" khi test kết thúc.
+    await tester.pumpWidget(const SizedBox.shrink());
+    await tester.pumpAndSettle();
+    await tester.runAsync(dependencies.dispose);
+    await tester.runAsync(authRepository.dispose);
+  });
 }

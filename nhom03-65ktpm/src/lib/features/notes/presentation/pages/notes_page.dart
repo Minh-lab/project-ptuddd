@@ -9,12 +9,16 @@ import '../widgets/note_tile.dart';
 ///
 /// CRUD/soạn thảo thuộc issue #3, nên màn này chỉ đọc dữ liệu.
 class NotesPage extends StatelessWidget {
-  const NotesPage({super.key});
+  const NotesPage({this.actions = const <Widget>[], super.key});
+
+  /// Widget hành động trên AppBar, do nơi điều hướng truyền vào (ví dụ nút
+  /// đăng xuất). Nhờ vậy feature notes không phải import feature auth.
+  final List<Widget> actions;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('SmartNote')),
+      appBar: AppBar(title: const Text('SmartNote'), actions: actions),
       body: BlocBuilder<NotesCubit, NotesState>(
         builder: (BuildContext context, NotesState state) {
           if (state.isLoading) {
