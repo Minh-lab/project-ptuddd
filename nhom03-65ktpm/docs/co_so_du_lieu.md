@@ -12,6 +12,8 @@
 | **Supabase Storage** | Ảnh quét vở, tệp đính kèm | Bucket riêng, phân quyền theo `user_id` |
 | **Drift (SQLite)** | Cache offline trên máy | Chỉ là bản sao, không phải nơi lưu chính |
 
+**Project Supabase của nhóm:** `NoteSmart` — ref `hxzimpvamyzyqdhkxexl`, vùng `ap-northeast-1`, Postgres 17. Đã tạo đủ 11 bảng ở mục 4 bằng [sql/20261121_tao_bang_co_ban.sql](sql/20261121_tao_bang_co_ban.sql).
+
 **Xác thực với Supabase:** bật *Authentication → Third-party auth → Firebase* (nhập Firebase Project ID). Firebase UID **không phải UUID**, nên:
 
 - `user_id` kiểu **`text`** (chứa Firebase UID), không dùng `uuid`.
@@ -265,3 +267,4 @@ Quy tắc đồng bộ: ghi Supabase trước → cập nhật Drift; khi mất 
 |---|---|
 | 21/11/2026 | Tạo file; chốt `notes`, `subjects`, RLS theo Firebase UID; đề xuất các bảng còn lại |
 | 21/11/2026 | Bỏ cột trạng thái và phân công; viết cấu trúc field cơ bản cho toàn bộ bảng, thành viên tự bổ sung khi làm |
+| 21/11/2026 | Tạo project Supabase `NoteSmart` (`hxzimpvamyzyqdhkxexl`); chạy `docs/sql/20261121_tao_bang_co_ban.sql` — 11 bảng, 12 index, RLS + policy cho tất cả bảng |
