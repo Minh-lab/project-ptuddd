@@ -4,6 +4,7 @@
 - **Bảng tiến độ:** https://github.com/users/Minh-lab/projects/6
 - **Thời gian:** 16/11/2026 – 28/11/2026 (02 tuần, 4 sprint)
 - **Hạn nộp (deadline):** **28/11/2026**
+- **Hạ tầng:** **Firebase Authentication** cho đăng nhập/đăng ký; **Supabase** (PostgreSQL + Storage) làm nơi lưu dữ liệu chung của cả nhóm; Drift chỉ là cache offline trên máy.
 
 ## 1. Quy trình làm việc trên GitHub
 
