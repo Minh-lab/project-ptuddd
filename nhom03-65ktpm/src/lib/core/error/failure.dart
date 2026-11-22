@@ -38,6 +38,11 @@ final class AuthFailure extends Failure {
       code == 'timeout';
 }
 
+/// Lỗi trong quá trình quét, chọn hoặc cắt ảnh vở.
+final class ScanFailure extends Failure {
+  const ScanFailure(super.message);
+}
+
 /// Lỗi không xác định.
 final class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message);

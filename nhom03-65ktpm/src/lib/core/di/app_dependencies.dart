@@ -6,6 +6,8 @@ import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/notes/data/repositories/note_repository_impl.dart';
 import '../../features/notes/domain/repositories/note_repository.dart';
+import '../../features/scan/data/repositories/scan_repository_impl.dart';
+import '../../features/scan/domain/repositories/scan_repository.dart';
 import '../database/app_database.dart';
 import '../database/notes_dao.dart';
 
@@ -20,11 +22,13 @@ class AppDependencies {
     required this.notesDao,
     required this.noteRepository,
     required this.authRepository,
+    required this.scanRepository,
   });
 
   factory AppDependencies.create({
     QueryExecutor? executor,
     AuthRepository? authRepository,
+    ScanRepository? scanRepository,
   }) {
     final database = AppDatabase(executor);
     final notesDao = NotesDao(database);
@@ -33,6 +37,7 @@ class AppDependencies {
       notesDao: notesDao,
       noteRepository: NoteRepositoryImpl(notesDao),
       authRepository: authRepository ?? _firebaseAuthRepository(),
+      scanRepository: scanRepository ?? ScanRepositoryImpl(),
     );
   }
 
@@ -46,6 +51,7 @@ class AppDependencies {
   final NotesDao notesDao;
   final NoteRepository noteRepository;
   final AuthRepository authRepository;
+  final ScanRepository scanRepository;
 
   Future<void> dispose() => database.close();
 }
