@@ -13,11 +13,11 @@
 
 | STT | Họ và Tên | Mã Sinh Viên | Lớp Sinh Hoạt | Vai Trò | Nhiệm Vụ Phân Công | Đóng Góp (%) | Email |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Nguyễn Minh | 2351170607 | 65KTPM | Trưởng nhóm | Kiến trúc ứng dụng, khởi tạo dự án, Firebase Auth, nhật ký hằng ngày, tóm tắt AI | 100% | [email] |
+| 1 | Nguyễn Minh | 2351170607 | 65KTPM | Trưởng nhóm | Kiến trúc ứng dụng, khởi tạo dự án, Firebase Auth, UI/UX nền tảng, tóm tắt AI | 100% | [email] |
 | 2 | Dương Hải Đăng | 2351170579 | 65KTPM | Thành viên | Tìm kiếm ghi chú, chia sẻ ghi chú, sao lưu và đồng bộ Supabase | 100% | [email] |
 | 3 | Nguyễn Hữu Quân | 2351170612 | 65KTPM | Thành viên | Quét vở, OCR bằng ML Kit, đóng gói APK và CI release | 100% | nguyenhuuquan01122k5@gmail.com |
 | 4 | Mông Thị Bích Hạnh | 2251061770 | 65KTPM | Thành viên | Phân loại theo môn học và tag, nhắc nhở học tập, thống kê streak, tài liệu và báo cáo | 100% | [email] |
-| 5 | Nguyễn Tiến Đạt | 2251161967 | 65KTPM | Thành viên | Ghi chú CRUD và tự lưu, UI/UX nền tảng, xuất Word, bài kiểm tra trắc nghiệm AI | 100% | [email] |
+| 5 | Nguyễn Tiến Đạt | 2251161967 | 65KTPM | Thành viên | Ghi chú CRUD và tự lưu, nhật ký hằng ngày, xuất Word, bài kiểm tra trắc nghiệm AI | 100% | [email] |
 
 > Ghi chú: ô Email của 4 thành viên cần được điền đúng **email đã đăng ký GitHub** (yêu cầu `README.md` §5.2) trước khi nộp bài.
 
@@ -27,11 +27,11 @@
 | --- | --- | --- | --- |
 | **Nguyễn Minh** (nhóm trưởng) | #1 | Khởi tạo dự án Flutter, Clean Architecture | S1 |
 | | #2 | Firebase Auth: đăng nhập, đăng ký, đăng xuất | S1 |
-| | #5 | Nhật ký hằng ngày | S2 |
+| | #4 | Thiết kế UI/UX nền tảng: theme, điều hướng, widget dùng chung | S1 |
 | | #12 | Tóm tắt AI: ngắn, dài, gạch ý chính | S3 |
 | | #21 | (P1) Đồng bộ đa thiết bị nâng cao | S4 |
 | **Nguyễn Tiến Đạt** | #3 | Ghi chú CRUD và tự lưu | S1 |
-| | #4 | UI/UX nền tảng: theme, điều hướng, widget dùng chung | S1 |
+| | #5 | Nhật ký hằng ngày | S2 |
 | | #11 | Xuất Word nhiều ghi chú ra `.docx` | S3 |
 | | #13 | Bài kiểm tra trắc nghiệm AI, chấm điểm, lưu điểm | S3 |
 | **Mông Thị Bích Hạnh** | #6 | Phân loại theo môn học và tag | S2 |
@@ -46,6 +46,8 @@
 | | #16 | Sao lưu và khôi phục dữ liệu với Supabase | S4 |
 | | #22 | (P1) Gợi ý tag thông minh bằng AI | S4 |
 
+> **Cập nhật 22/11/2026:** hoán đổi #4 (UI/UX nền tảng) và #5 (Nhật ký hằng ngày) — Nguyễn Minh nhận #4, Nguyễn Tiến Đạt nhận #5. Milestone/sprint giữ nguyên theo issue.
+
 > **#15 — Bản Web: xem và sửa ghi chú cơ bản (S3) và #18 — Bộ kiểm thử: unit, widget, integration (S4) hiện chưa có người phụ trách.** Cần phân công bổ sung trước 23/11 (#15) và 26/11 (#18).
 
 ## 3. Tổng Hợp Theo Sprint
@@ -53,7 +55,7 @@
 | Sprint | Thời gian | Thành viên tham gia | Issue |
 | --- | --- | --- | --- |
 | S1 | 16/11 – 19/11 | Nguyễn Minh, Nguyễn Tiến Đạt | #1 – #4 |
-| S2 | 20/11 – 22/11 | Nguyễn Minh, Dương Hải Đăng, Nguyễn Hữu Quân, Mông Thị Bích Hạnh | #5 – #10 |
+| S2 | 20/11 – 22/11 | Nguyễn Tiến Đạt, Dương Hải Đăng, Nguyễn Hữu Quân, Mông Thị Bích Hạnh | #5 – #10 |
 | S3 | 23/11 – 25/11 | Nguyễn Minh, Nguyễn Tiến Đạt, Dương Hải Đăng | #11 – #15 |
 | S4 | 26/11 – 28/11 | Nguyễn Minh, Mông Thị Bích Hạnh, Dương Hải Đăng | #16 – #22 |
 

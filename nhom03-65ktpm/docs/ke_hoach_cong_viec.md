@@ -20,11 +20,11 @@
 | --- | --- | --- | --- |
 | **Nguyễn Minh** (nhóm trưởng) | #1 | Khởi tạo dự án Flutter, Clean Architecture | S1 |
 | | #2 | Firebase Auth: đăng nhập, đăng ký, đăng xuất | S1 |
-| | #5 | Nhật ký hằng ngày | S2 |
+| | #4 | Thiết kế UI/UX nền tảng: theme, điều hướng, widget dùng chung | S1 |
 | | #12 | Tóm tắt AI: ngắn, dài, gạch ý chính | S3 |
 | | #21 | (P1) Đồng bộ đa thiết bị nâng cao | S4 |
 | **Nguyễn Tiến Đạt** | #3 | Ghi chú CRUD và tự lưu | S1 |
-| | #4 | UI/UX nền tảng: theme, điều hướng, widget dùng chung | S1 |
+| | #5 | Nhật ký hằng ngày | S2 |
 | | #11 | Xuất Word nhiều ghi chú ra `.docx` | S3 |
 | | #13 | Bài kiểm tra trắc nghiệm AI, chấm điểm, lưu điểm | S3 |
 | **Mông Thị Bích Hạnh** | #6 | Phân loại theo môn học và tag | S2 |
@@ -38,6 +38,8 @@
 | | #14 | Chia sẻ ghi chú với quyền chỉ xem | S3 |
 | | #16 | Sao lưu và khôi phục dữ liệu với Supabase | S4 |
 | | #22 | (P1) Gợi ý tag thông minh bằng AI | S4 |
+
+> **Cập nhật 22/11/2026:** hoán đổi #4 (UI/UX nền tảng) và #5 (Nhật ký hằng ngày) — Nguyễn Minh nhận #4, Nguyễn Tiến Đạt nhận #5. Milestone, sprint và nhãn giữ nguyên theo issue (không dời lịch).
 
 > **#15 — Bản Web: xem và sửa ghi chú cơ bản (S3) và #18 — Bộ kiểm thử: unit, widget, integration (S4) hiện chưa có người phụ trách.** Cần phân công bổ sung trước 23/11 (#15) và 26/11 (#18).
 
