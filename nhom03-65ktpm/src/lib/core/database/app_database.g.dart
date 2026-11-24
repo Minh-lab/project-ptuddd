@@ -550,15 +550,441 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
   }
 }
 
+class $QuizScoresTable extends QuizScores
+    with TableInfo<$QuizScoresTable, QuizScoreRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $QuizScoresTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteIdMeta = const VerificationMeta('noteId');
+  @override
+  late final GeneratedColumn<String> noteId = GeneratedColumn<String>(
+    'note_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteTitleMeta = const VerificationMeta(
+    'noteTitle',
+  );
+  @override
+  late final GeneratedColumn<String> noteTitle = GeneratedColumn<String>(
+    'note_title',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(''),
+  );
+  static const VerificationMeta _correctAnswersMeta = const VerificationMeta(
+    'correctAnswers',
+  );
+  @override
+  late final GeneratedColumn<int> correctAnswers = GeneratedColumn<int>(
+    'correct_answers',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _totalQuestionsMeta = const VerificationMeta(
+    'totalQuestions',
+  );
+  @override
+  late final GeneratedColumn<int> totalQuestions = GeneratedColumn<int>(
+    'total_questions',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _completedAtMeta = const VerificationMeta(
+    'completedAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> completedAt = GeneratedColumn<DateTime>(
+    'completed_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    noteId,
+    noteTitle,
+    correctAnswers,
+    totalQuestions,
+    completedAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'quiz_scores';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<QuizScoreRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('note_id')) {
+      context.handle(
+        _noteIdMeta,
+        noteId.isAcceptableOrUnknown(data['note_id']!, _noteIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_noteIdMeta);
+    }
+    if (data.containsKey('note_title')) {
+      context.handle(
+        _noteTitleMeta,
+        noteTitle.isAcceptableOrUnknown(data['note_title']!, _noteTitleMeta),
+      );
+    }
+    if (data.containsKey('correct_answers')) {
+      context.handle(
+        _correctAnswersMeta,
+        correctAnswers.isAcceptableOrUnknown(
+          data['correct_answers']!,
+          _correctAnswersMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_correctAnswersMeta);
+    }
+    if (data.containsKey('total_questions')) {
+      context.handle(
+        _totalQuestionsMeta,
+        totalQuestions.isAcceptableOrUnknown(
+          data['total_questions']!,
+          _totalQuestionsMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_totalQuestionsMeta);
+    }
+    if (data.containsKey('completed_at')) {
+      context.handle(
+        _completedAtMeta,
+        completedAt.isAcceptableOrUnknown(
+          data['completed_at']!,
+          _completedAtMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  QuizScoreRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return QuizScoreRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      noteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note_id'],
+      )!,
+      noteTitle: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note_title'],
+      )!,
+      correctAnswers: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}correct_answers'],
+      )!,
+      totalQuestions: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}total_questions'],
+      )!,
+      completedAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}completed_at'],
+      )!,
+    );
+  }
+
+  @override
+  $QuizScoresTable createAlias(String alias) {
+    return $QuizScoresTable(attachedDatabase, alias);
+  }
+}
+
+class QuizScoreRow extends DataClass implements Insertable<QuizScoreRow> {
+  final String id;
+  final String noteId;
+  final String noteTitle;
+  final int correctAnswers;
+  final int totalQuestions;
+  final DateTime completedAt;
+  const QuizScoreRow({
+    required this.id,
+    required this.noteId,
+    required this.noteTitle,
+    required this.correctAnswers,
+    required this.totalQuestions,
+    required this.completedAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['note_id'] = Variable<String>(noteId);
+    map['note_title'] = Variable<String>(noteTitle);
+    map['correct_answers'] = Variable<int>(correctAnswers);
+    map['total_questions'] = Variable<int>(totalQuestions);
+    map['completed_at'] = Variable<DateTime>(completedAt);
+    return map;
+  }
+
+  QuizScoresCompanion toCompanion(bool nullToAbsent) {
+    return QuizScoresCompanion(
+      id: Value(id),
+      noteId: Value(noteId),
+      noteTitle: Value(noteTitle),
+      correctAnswers: Value(correctAnswers),
+      totalQuestions: Value(totalQuestions),
+      completedAt: Value(completedAt),
+    );
+  }
+
+  factory QuizScoreRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return QuizScoreRow(
+      id: serializer.fromJson<String>(json['id']),
+      noteId: serializer.fromJson<String>(json['noteId']),
+      noteTitle: serializer.fromJson<String>(json['noteTitle']),
+      correctAnswers: serializer.fromJson<int>(json['correctAnswers']),
+      totalQuestions: serializer.fromJson<int>(json['totalQuestions']),
+      completedAt: serializer.fromJson<DateTime>(json['completedAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'noteId': serializer.toJson<String>(noteId),
+      'noteTitle': serializer.toJson<String>(noteTitle),
+      'correctAnswers': serializer.toJson<int>(correctAnswers),
+      'totalQuestions': serializer.toJson<int>(totalQuestions),
+      'completedAt': serializer.toJson<DateTime>(completedAt),
+    };
+  }
+
+  QuizScoreRow copyWith({
+    String? id,
+    String? noteId,
+    String? noteTitle,
+    int? correctAnswers,
+    int? totalQuestions,
+    DateTime? completedAt,
+  }) => QuizScoreRow(
+    id: id ?? this.id,
+    noteId: noteId ?? this.noteId,
+    noteTitle: noteTitle ?? this.noteTitle,
+    correctAnswers: correctAnswers ?? this.correctAnswers,
+    totalQuestions: totalQuestions ?? this.totalQuestions,
+    completedAt: completedAt ?? this.completedAt,
+  );
+  QuizScoreRow copyWithCompanion(QuizScoresCompanion data) {
+    return QuizScoreRow(
+      id: data.id.present ? data.id.value : this.id,
+      noteId: data.noteId.present ? data.noteId.value : this.noteId,
+      noteTitle: data.noteTitle.present ? data.noteTitle.value : this.noteTitle,
+      correctAnswers: data.correctAnswers.present
+          ? data.correctAnswers.value
+          : this.correctAnswers,
+      totalQuestions: data.totalQuestions.present
+          ? data.totalQuestions.value
+          : this.totalQuestions,
+      completedAt: data.completedAt.present
+          ? data.completedAt.value
+          : this.completedAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QuizScoreRow(')
+          ..write('id: $id, ')
+          ..write('noteId: $noteId, ')
+          ..write('noteTitle: $noteTitle, ')
+          ..write('correctAnswers: $correctAnswers, ')
+          ..write('totalQuestions: $totalQuestions, ')
+          ..write('completedAt: $completedAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    noteId,
+    noteTitle,
+    correctAnswers,
+    totalQuestions,
+    completedAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is QuizScoreRow &&
+          other.id == this.id &&
+          other.noteId == this.noteId &&
+          other.noteTitle == this.noteTitle &&
+          other.correctAnswers == this.correctAnswers &&
+          other.totalQuestions == this.totalQuestions &&
+          other.completedAt == this.completedAt);
+}
+
+class QuizScoresCompanion extends UpdateCompanion<QuizScoreRow> {
+  final Value<String> id;
+  final Value<String> noteId;
+  final Value<String> noteTitle;
+  final Value<int> correctAnswers;
+  final Value<int> totalQuestions;
+  final Value<DateTime> completedAt;
+  final Value<int> rowid;
+  const QuizScoresCompanion({
+    this.id = const Value.absent(),
+    this.noteId = const Value.absent(),
+    this.noteTitle = const Value.absent(),
+    this.correctAnswers = const Value.absent(),
+    this.totalQuestions = const Value.absent(),
+    this.completedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  QuizScoresCompanion.insert({
+    required String id,
+    required String noteId,
+    this.noteTitle = const Value.absent(),
+    required int correctAnswers,
+    required int totalQuestions,
+    this.completedAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       noteId = Value(noteId),
+       correctAnswers = Value(correctAnswers),
+       totalQuestions = Value(totalQuestions);
+  static Insertable<QuizScoreRow> custom({
+    Expression<String>? id,
+    Expression<String>? noteId,
+    Expression<String>? noteTitle,
+    Expression<int>? correctAnswers,
+    Expression<int>? totalQuestions,
+    Expression<DateTime>? completedAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (noteId != null) 'note_id': noteId,
+      if (noteTitle != null) 'note_title': noteTitle,
+      if (correctAnswers != null) 'correct_answers': correctAnswers,
+      if (totalQuestions != null) 'total_questions': totalQuestions,
+      if (completedAt != null) 'completed_at': completedAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  QuizScoresCompanion copyWith({
+    Value<String>? id,
+    Value<String>? noteId,
+    Value<String>? noteTitle,
+    Value<int>? correctAnswers,
+    Value<int>? totalQuestions,
+    Value<DateTime>? completedAt,
+    Value<int>? rowid,
+  }) {
+    return QuizScoresCompanion(
+      id: id ?? this.id,
+      noteId: noteId ?? this.noteId,
+      noteTitle: noteTitle ?? this.noteTitle,
+      correctAnswers: correctAnswers ?? this.correctAnswers,
+      totalQuestions: totalQuestions ?? this.totalQuestions,
+      completedAt: completedAt ?? this.completedAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (noteId.present) {
+      map['note_id'] = Variable<String>(noteId.value);
+    }
+    if (noteTitle.present) {
+      map['note_title'] = Variable<String>(noteTitle.value);
+    }
+    if (correctAnswers.present) {
+      map['correct_answers'] = Variable<int>(correctAnswers.value);
+    }
+    if (totalQuestions.present) {
+      map['total_questions'] = Variable<int>(totalQuestions.value);
+    }
+    if (completedAt.present) {
+      map['completed_at'] = Variable<DateTime>(completedAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('QuizScoresCompanion(')
+          ..write('id: $id, ')
+          ..write('noteId: $noteId, ')
+          ..write('noteTitle: $noteTitle, ')
+          ..write('correctAnswers: $correctAnswers, ')
+          ..write('totalQuestions: $totalQuestions, ')
+          ..write('completedAt: $completedAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $NotesTable notes = $NotesTable(this);
+  late final $QuizScoresTable quizScores = $QuizScoresTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [notes];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [notes, quizScores];
 }
 
 typedef $$NotesTableCreateCompanionBuilder = NotesCompanion Function({
@@ -837,10 +1263,244 @@ typedef $$NotesTableProcessedTableManager =
       NoteRow,
       PrefetchHooks Function()
     >;
+typedef $$QuizScoresTableCreateCompanionBuilder = QuizScoresCompanion Function({
+  required String id,
+  required String noteId,
+  Value<String> noteTitle,
+  required int correctAnswers,
+  required int totalQuestions,
+  Value<DateTime> completedAt,
+  Value<int> rowid,
+});
+typedef $$QuizScoresTableUpdateCompanionBuilder = QuizScoresCompanion Function({
+  Value<String> id,
+  Value<String> noteId,
+  Value<String> noteTitle,
+  Value<int> correctAnswers,
+  Value<int> totalQuestions,
+  Value<DateTime> completedAt,
+  Value<int> rowid,
+});
+
+class $$QuizScoresTableFilterComposer
+    extends Composer<_$AppDatabase, $QuizScoresTable> {
+  $$QuizScoresTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get noteId => $composableBuilder(
+    column: $table.noteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get noteTitle => $composableBuilder(
+    column: $table.noteTitle,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get correctAnswers => $composableBuilder(
+    column: $table.correctAnswers,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get totalQuestions => $composableBuilder(
+    column: $table.totalQuestions,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$QuizScoresTableOrderingComposer
+    extends Composer<_$AppDatabase, $QuizScoresTable> {
+  $$QuizScoresTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get noteId => $composableBuilder(
+    column: $table.noteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get noteTitle => $composableBuilder(
+    column: $table.noteTitle,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get correctAnswers => $composableBuilder(
+    column: $table.correctAnswers,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get totalQuestions => $composableBuilder(
+    column: $table.totalQuestions,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$QuizScoresTableAnnotationComposer
+    extends Composer<_$AppDatabase, $QuizScoresTable> {
+  $$QuizScoresTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get noteId =>
+      $composableBuilder(column: $table.noteId, builder: (column) => column);
+
+  GeneratedColumn<String> get noteTitle =>
+      $composableBuilder(column: $table.noteTitle, builder: (column) => column);
+
+  GeneratedColumn<int> get correctAnswers => $composableBuilder(
+    column: $table.correctAnswers,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get totalQuestions => $composableBuilder(
+    column: $table.totalQuestions,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<DateTime> get completedAt => $composableBuilder(
+    column: $table.completedAt,
+    builder: (column) => column,
+  );
+}
+
+class $$QuizScoresTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $QuizScoresTable,
+          QuizScoreRow,
+          $$QuizScoresTableFilterComposer,
+          $$QuizScoresTableOrderingComposer,
+          $$QuizScoresTableAnnotationComposer,
+          $$QuizScoresTableCreateCompanionBuilder,
+          $$QuizScoresTableUpdateCompanionBuilder,
+          (
+            QuizScoreRow,
+            BaseReferences<_$AppDatabase, $QuizScoresTable, QuizScoreRow>,
+          ),
+          QuizScoreRow,
+          PrefetchHooks Function()
+        > {
+  $$QuizScoresTableTableManager(_$AppDatabase db, $QuizScoresTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$QuizScoresTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$QuizScoresTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$QuizScoresTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> noteId = const Value.absent(),
+                Value<String> noteTitle = const Value.absent(),
+                Value<int> correctAnswers = const Value.absent(),
+                Value<int> totalQuestions = const Value.absent(),
+                Value<DateTime> completedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => QuizScoresCompanion(
+                id: id,
+                noteId: noteId,
+                noteTitle: noteTitle,
+                correctAnswers: correctAnswers,
+                totalQuestions: totalQuestions,
+                completedAt: completedAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String noteId,
+                Value<String> noteTitle = const Value.absent(),
+                required int correctAnswers,
+                required int totalQuestions,
+                Value<DateTime> completedAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => QuizScoresCompanion.insert(
+                id: id,
+                noteId: noteId,
+                noteTitle: noteTitle,
+                correctAnswers: correctAnswers,
+                totalQuestions: totalQuestions,
+                completedAt: completedAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$QuizScoresTable, QuizScoreRow>(table),
+                  BaseReferences<_$AppDatabase, $QuizScoresTable, QuizScoreRow>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$QuizScoresTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $QuizScoresTable,
+      QuizScoreRow,
+      $$QuizScoresTableFilterComposer,
+      $$QuizScoresTableOrderingComposer,
+      $$QuizScoresTableAnnotationComposer,
+      $$QuizScoresTableCreateCompanionBuilder,
+      $$QuizScoresTableUpdateCompanionBuilder,
+      (
+        QuizScoreRow,
+        BaseReferences<_$AppDatabase, $QuizScoresTable, QuizScoreRow>,
+      ),
+      QuizScoreRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
   $AppDatabaseManager(this._db);
   $$NotesTableTableManager get notes =>
       $$NotesTableTableManager(_db, _db.notes);
+  $$QuizScoresTableTableManager get quizScores =>
+      $$QuizScoresTableTableManager(_db, _db.quizScores);
 }
