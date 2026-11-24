@@ -41,6 +41,32 @@ class NotesCubit extends Cubit<NotesState> {
     );
   }
 
+  Future<Note> createNote({
+    required String title,
+    required String content,
+    NoteKind kind = NoteKind.note,
+  }) async {
+    final now = DateTime.now();
+    final note = Note(
+      id: '${now.microsecondsSinceEpoch}-${now.hashCode}',
+      title: title,
+      content: content,
+      kind: kind,
+      createdAt: now,
+      updatedAt: now,
+    );
+    await _repository.createNote(note);
+    return note;
+  }
+
+  Future<void> updateNote(Note note, {String? title, String? content}) async {
+    await _repository.updateNote(
+      note.copyWith(title: title, content: content, updatedAt: DateTime.now()),
+    );
+  }
+
+  Future<void> deleteNote(String id) => _repository.deleteNote(id);
+
   @override
   Future<void> close() async {
     await _subscription?.cancel();

@@ -29,3 +29,17 @@ class Notes extends Table {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+@DataClassName('QuizScoreRow')
+class QuizScores extends Table {
+  TextColumn get id => text()();
+  TextColumn get noteId => text()();
+  TextColumn get noteTitle => text().withDefault(const Constant(''))();
+  IntColumn get correctAnswers => integer()();
+  IntColumn get totalQuestions => integer()();
+  DateTimeColumn get completedAt =>
+      dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
