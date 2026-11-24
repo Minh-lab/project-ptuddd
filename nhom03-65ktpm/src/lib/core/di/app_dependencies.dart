@@ -8,6 +8,7 @@ import '../../features/notes/data/repositories/note_repository_impl.dart';
 import '../../features/notes/domain/repositories/note_repository.dart';
 import '../database/app_database.dart';
 import '../database/notes_dao.dart';
+import '../database/quiz_scores_dao.dart';
 
 /// Nơi duy nhất khởi tạo database và repository.
 ///
@@ -20,6 +21,7 @@ class AppDependencies {
     required this.notesDao,
     required this.noteRepository,
     required this.authRepository,
+    required this.quizScoresDao,
   });
 
   factory AppDependencies.create({
@@ -28,11 +30,13 @@ class AppDependencies {
   }) {
     final database = AppDatabase(executor);
     final notesDao = NotesDao(database);
+    final quizScoresDao = QuizScoresDao(database);
     return AppDependencies._(
       database: database,
       notesDao: notesDao,
       noteRepository: NoteRepositoryImpl(notesDao),
       authRepository: authRepository ?? _firebaseAuthRepository(),
+      quizScoresDao: quizScoresDao,
     );
   }
 
@@ -46,6 +50,7 @@ class AppDependencies {
   final NotesDao notesDao;
   final NoteRepository noteRepository;
   final AuthRepository authRepository;
+  final QuizScoresDao quizScoresDao;
 
   Future<void> dispose() => database.close();
 }

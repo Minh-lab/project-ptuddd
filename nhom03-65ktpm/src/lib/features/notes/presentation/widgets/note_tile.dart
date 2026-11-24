@@ -4,9 +4,20 @@ import '../../domain/entities/note.dart';
 
 /// Một dòng ghi chú trong danh sách.
 class NoteTile extends StatelessWidget {
-  const NoteTile({required this.note, super.key});
+  const NoteTile({
+    required this.note,
+    this.selected = false,
+    this.selectionMode = false,
+    this.onTap,
+    this.onLongPress,
+    super.key,
+  });
 
   final Note note;
+  final bool selected;
+  final bool selectionMode;
+  final VoidCallback? onTap;
+  final VoidCallback? onLongPress;
 
   @override
   Widget build(BuildContext context) {
@@ -14,8 +25,15 @@ class NoteTile extends StatelessWidget {
     final preview = note.content.trim().replaceAll('\n', ' ');
 
     return ListTile(
+      selected: selected,
+      onTap: onTap,
+      onLongPress: onLongPress,
       leading: Icon(
-        note.isDiary ? Icons.event_note_outlined : Icons.sticky_note_2_outlined,
+        selected
+            ? Icons.check_circle
+            : note.isDiary
+            ? Icons.event_note_outlined
+            : Icons.sticky_note_2_outlined,
       ),
       title: Text(
         note.displayTitle,
