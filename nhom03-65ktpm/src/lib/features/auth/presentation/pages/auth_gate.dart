@@ -32,7 +32,10 @@ class AuthGate extends StatelessWidget {
         if (state.isAuthenticated) {
           return BlocProvider<NotesCubit>(
             create: (_) => NotesCubit(dependencies.noteRepository)..load(),
-            child: const NotesPage(actions: <Widget>[LogoutButton()]),
+            child: NotesPage(
+              dependencies: dependencies,
+              actions: const <Widget>[LogoutButton()],
+            ),
           );
         }
         return const LoginPage();
