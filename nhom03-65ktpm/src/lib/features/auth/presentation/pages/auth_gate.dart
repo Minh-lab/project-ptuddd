@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/app_dependencies.dart';
 import '../../../notes/presentation/bloc/notes_cubit.dart';
 import '../../../notes/presentation/pages/notes_page.dart';
-import '../../../scan/presentation/pages/scan_page.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/logout_button.dart';
@@ -34,24 +33,9 @@ class AuthGate extends StatelessWidget {
           return BlocProvider<NotesCubit>(
             create: (_) => NotesCubit(dependencies.noteRepository)..load(),
             child: NotesPage(
+              dependencies: dependencies,
               actions: const <Widget>[LogoutButton()],
-              floatingActionButton: Builder(
-                builder: (BuildContext innerContext) {
-                  return FloatingActionButton.extended(
-                    onPressed: () {
-                      Navigator.of(innerContext).push<void>(
-                        MaterialPageRoute<void>(
-                          builder: (_) => ScanPage(
-                            scanRepository: dependencies.scanRepository,
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.document_scanner_outlined),
-                    label: const Text('Quét vở'),
-                  );
-                },
-              ),
+              scanRepository: dependencies.scanRepository,
             ),
           );
         }
