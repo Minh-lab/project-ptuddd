@@ -14,15 +14,18 @@ class SmartNoteApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'SmartNote',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      darkTheme: AppTheme.dark,
-      home: BlocProvider<AuthCubit>(
-        create: (BuildContext context) =>
-            AuthCubit(dependencies.authRepository)..start(),
-        child: AuthGate(dependencies: dependencies),
+    // AuthCubit được provide **trên** MaterialApp để mọi route (kể cả route
+    // được push sau này như màn đăng ký) đều đọc được; nếu đặt bên trong
+    // `home:` thì route mới sẽ không thấy provider.
+    return BlocProvider<AuthCubit>(
+      create: (BuildContext context) =>
+          AuthCubit(dependencies.authRepository)..start(),
+      child: MaterialApp(
+        title: 'SmartNote',
+        debugShowCheckedModeBanner: false,
+        theme: AppTheme.light,
+        darkTheme: AppTheme.dark,
+        home: AuthGate(dependencies: dependencies),
       ),
     );
   }
