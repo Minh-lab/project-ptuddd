@@ -157,6 +157,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
                 ),
                 keyboardType: TextInputType.multiline,
                 expands: true,
+                maxLines: null,
                 textAlignVertical: TextAlignVertical.top,
               ),
             ),
