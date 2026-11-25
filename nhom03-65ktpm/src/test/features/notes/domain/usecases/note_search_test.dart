@@ -37,10 +37,13 @@ void main() {
     expect(search(notes, 'VẬT LÝ'), <Note>[otherNote]);
   });
 
-  test('truy vấn rỗng trả toàn bộ và truy vấn không khớp trả danh sách rỗng', () {
-    expect(search(notes, '  '), orderedEquals(notes));
-    expect(search(notes, 'khong co ket qua'), isEmpty);
-  });
+  test(
+    'truy vấn rỗng trả toàn bộ và truy vấn không khớp trả danh sách rỗng',
+    () {
+      expect(search(notes, '  '), orderedEquals(notes));
+      expect(search(notes, 'khong co ket qua'), isEmpty);
+    },
+  );
 
   test('trả các khoảng tô sáng theo chỉ số chuỗi gốc có dấu', () {
     expect(

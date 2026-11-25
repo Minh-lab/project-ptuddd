@@ -12,9 +12,8 @@ import 'notes_state.dart';
 ///
 /// Widget không đọc database trực tiếp: mọi thứ đi qua cubit này.
 class NotesCubit extends Cubit<NotesState> {
-  NotesCubit(this._repository, {NoteSearch noteSearch = const NoteSearch()})
-    : _noteSearch = noteSearch,
-      super(const NotesState());
+  NotesCubit(this._repository, {this._noteSearch = const NoteSearch()})
+    : super(const NotesState());
 
   final NoteRepository _repository;
   final NoteSearch _noteSearch;
