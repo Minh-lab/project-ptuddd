@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/app_dependencies.dart';
 import '../../domain/entities/note.dart';
+import '../../domain/services/note_search.dart';
 import '../bloc/notes_cubit.dart';
 import '../bloc/notes_state.dart';
 import '../widgets/note_tile.dart';
@@ -21,6 +24,7 @@ class NotesPage extends StatefulWidget {
   });
 
   final AppDependencies dependencies;
+
   /// Widget hành động trên AppBar, do nơi điều hướng truyền vào (ví dụ nút
   /// đăng xuất). Nhờ vậy feature notes không phải import feature auth.
   final List<Widget> actions;
@@ -32,7 +36,29 @@ class NotesPage extends StatefulWidget {
 class _NotesPageState extends State<NotesPage> {
   NoteKind? _filter;
   final Set<String> _selectedIds = <String>{};
+  final TextEditingController _searchController = TextEditingController();
+  Timer? _searchDebounce;
+  String _searchQuery = '';
   int _tabIndex = 0;
+
+  @override
+  void dispose() {
+    _searchDebounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    _searchDebounce?.cancel();
+    final query = value.trim();
+    if (query.isEmpty) {
+      setState(() => _searchQuery = '');
+      return;
+    }
+    _searchDebounce = Timer(const Duration(milliseconds: 300), () {
+      if (mounted) setState(() => _searchQuery = query);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -51,8 +77,14 @@ class _NotesPageState extends State<NotesPage> {
                     onSelected: (value) => setState(() => _filter = value),
                     itemBuilder: (_) => const <PopupMenuEntry<NoteKind?>>[
                       PopupMenuItem(value: null, child: Text('Tất cả')),
-                      PopupMenuItem(value: NoteKind.note, child: Text('Ghi chú')),
-                      PopupMenuItem(value: NoteKind.diary, child: Text('Nhật ký')),
+                      PopupMenuItem(
+                        value: NoteKind.note,
+                        child: Text('Ghi chú'),
+                      ),
+                      PopupMenuItem(
+                        value: NoteKind.diary,
+                        child: Text('Nhật ký'),
+                      ),
                     ],
                   ),
                   ...widget.actions,
@@ -72,60 +104,106 @@ class _NotesPageState extends State<NotesPage> {
         ],
       ),
       body: _tabIndex == 0
-          ? BlocBuilder<NotesCubit, NotesState>(
-        builder: (BuildContext context, NotesState state) {
-          if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (state.status == NotesStatus.failure) {
-            return _Message(
-              icon: Icons.error_outline,
-              text: state.errorMessage ?? 'Đã xảy ra lỗi',
-            );
-          }
-          final notes = state.notes
-              .where((note) => _filter == null || note.kind == _filter)
-              .toList();
-          if (notes.isEmpty) {
-            return const _Message(
-              icon: Icons.sticky_note_2_outlined,
-              text: 'Chưa có ghi chú nào',
-            );
-          }
-          return ListView.separated(
-            itemCount: notes.length,
-            separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (BuildContext context, int index) {
-              final note = notes[index];
-              final selected = _selectedIds.contains(note.id);
-              return NoteTile(
-                note: note,
-                selected: selected,
-                onLongPress: () =>
-                    setState(() => _selectedIds.add(note.id)),
-                onTap: () {
-                  if (_selectedIds.isNotEmpty) {
-                    setState(() {
-                      if (selected) {
-                        _selectedIds.remove(note.id);
-                      } else {
-                        _selectedIds.add(note.id);
-                      }
-                    });
-                  } else {
-                    Navigator.of(context).push(
-                      MaterialPageRoute<void>(
-                        builder: (_) =>
-                            NoteEditorPage(cubit: cubit, note: note),
+          ? Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                  child: TextField(
+                    key: const ValueKey<String>('notes-search-field'),
+                    controller: _searchController,
+                    onChanged: _onSearchChanged,
+                    textInputAction: TextInputAction.search,
+                    decoration: InputDecoration(
+                      hintText: 'Tìm kiếm ghi chú',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchController.text.isEmpty
+                          ? null
+                          : IconButton(
+                              tooltip: 'Xóa tìm kiếm',
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                _onSearchChanged('');
+                              },
+                            ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
                       ),
-                    );
-                  }
-                },
-              );
-            },
-          );
-        },
-          )
+                      isDense: true,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: BlocBuilder<NotesCubit, NotesState>(
+                    builder: (BuildContext context, NotesState state) {
+                      if (state.isLoading) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (state.status == NotesStatus.failure) {
+                        return _Message(
+                          icon: Icons.error_outline,
+                          text: state.errorMessage ?? 'Đã xảy ra lỗi',
+                        );
+                      }
+                      final filteredNotes = state.notes
+                          .where(
+                            (note) => _filter == null || note.kind == _filter,
+                          )
+                          .toList();
+                      final notes = NoteSearch.filter(
+                        filteredNotes,
+                        _searchQuery,
+                      );
+                      if (notes.isEmpty) {
+                        return _Message(
+                          icon: _searchQuery.isEmpty
+                              ? Icons.sticky_note_2_outlined
+                              : Icons.search_off,
+                          text: _searchQuery.isEmpty
+                              ? 'Chưa có ghi chú nào'
+                              : 'Không tìm thấy ghi chú phù hợp',
+                        );
+                      }
+                      return ListView.separated(
+                        itemCount: notes.length,
+                        separatorBuilder: (_, _) => const Divider(height: 1),
+                        itemBuilder: (BuildContext context, int index) {
+                          final note = notes[index];
+                          final selected = _selectedIds.contains(note.id);
+                          return NoteTile(
+                            note: note,
+                            searchQuery: _searchQuery,
+                            selected: selected,
+                            onLongPress: () =>
+                                setState(() => _selectedIds.add(note.id)),
+                            onTap: () {
+                              if (_selectedIds.isNotEmpty) {
+                                setState(() {
+                                  if (selected) {
+                                    _selectedIds.remove(note.id);
+                                  } else {
+                                    _selectedIds.add(note.id);
+                                  }
+                                });
+                              } else {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute<void>(
+                                    builder: (_) => NoteEditorPage(
+                                      cubit: cubit,
+                                      note: note,
+                                    ),
+                                  ),
+                                );
+                              }
+                            },
+                          );
+                        },
+                      );
+                    },
+                  ),
+                ),
+              ],
+            )
           : QuizPage(
               notesCubit: cubit,
               scoresDao: widget.dependencies.quizScoresDao,
@@ -154,10 +232,7 @@ class _NotesPageState extends State<NotesPage> {
     );
   }
 
-  Future<void> _showCreateSheet(
-    BuildContext context,
-    NotesCubit cubit,
-  ) async {
+  Future<void> _showCreateSheet(BuildContext context, NotesCubit cubit) async {
     final navigator = Navigator.of(context);
     final kind = await showModalBottomSheet<NoteKind>(
       context: context,
@@ -195,15 +270,15 @@ class _NotesPageState extends State<NotesPage> {
     try {
       final path = await WordExportService().exportNotes(selected);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đã xuất tài liệu Word:\n$path')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Đã xuất tài liệu Word:\n$path')));
       setState(_selectedIds.clear);
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không xuất được Word: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Không xuất được Word: $error')));
     }
   }
 }
