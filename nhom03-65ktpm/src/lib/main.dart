@@ -10,15 +10,14 @@ Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    await FirebaseBootstrap.initialize();
+    final firebaseInitialized = await FirebaseBootstrap.initialize();
+    final dependencies = AppDependencies.create(
+      developmentMode: !firebaseInitialized,
+    );
+    runApp(SmartNoteApp(dependencies: dependencies));
   } on FirebaseException catch (error) {
     runApp(FirebaseConfigErrorPage(detail: 'Mã lỗi: ${error.code}'));
-    return;
   } catch (error) {
     runApp(FirebaseConfigErrorPage(detail: '$error'));
-    return;
   }
-
-  final dependencies = AppDependencies.create();
-  runApp(SmartNoteApp(dependencies: dependencies));
 }

@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 /// Khởi tạo Firebase cho app.
@@ -21,6 +23,11 @@ import 'package:firebase_core/firebase_core.dart';
 /// Không có giá trị bí mật nào được hardcode trong mã nguồn.
 class FirebaseBootstrap {
   const FirebaseBootstrap._();
+
+  static const bool _developmentFallbackEnabled = bool.fromEnvironment(
+    'SMARTNOTE_DEVELOPMENT_MODE',
+    defaultValue: true,
+  );
 
   /// Đọc cấu hình Firebase từ `--dart-define`; trả `null` nếu thiếu.
   static FirebaseOptions? optionsFromEnvironment() {
@@ -46,14 +53,35 @@ class FirebaseBootstrap {
     );
   }
 
-  /// Khởi tạo Firebase; ném `FirebaseException` nếu chưa cấu hình hoặc lỗi.
-  static Future<void> initialize() async {
+  /// Trả `false` khi thiếu cấu hình Firebase trong debug Development Mode.
+  ///
+  /// Lỗi cấu hình khác vẫn được ném ra để không âm thầm chuyển sang mock.
+  static Future<bool> initialize() async {
     final options = optionsFromEnvironment();
     if (options != null) {
       await Firebase.initializeApp(options: options);
-      return;
+      return true;
     }
-    // Không có --dart-define: Firebase đọc file cấu hình của nền tảng.
-    await Firebase.initializeApp();
+    try {
+      // Không có --dart-define: Firebase đọc file cấu hình của nền tảng.
+      await Firebase.initializeApp();
+      return true;
+    } on PlatformException catch (error) {
+      if (kDebugMode &&
+          _developmentFallbackEnabled &&
+          isMissingDefaultOptionsError(error)) {
+        return false;
+      }
+      rethrow;
+    }
+  }
+
+  @visibleForTesting
+  static bool isMissingDefaultOptionsError(Object error) {
+    return error is PlatformException &&
+        (error.message?.contains(
+              'Failed to load FirebaseOptions from resource',
+            ) ??
+            false);
   }
 }
