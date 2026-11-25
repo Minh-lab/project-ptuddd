@@ -20,6 +20,9 @@
 - Policy dùng `(select auth.jwt() ->> 'sub')`, **không** dùng `auth.uid()`.
 - User Firebase phải có custom claim `role = "authenticated"`, nếu không request chạy như `anon` và RLS từ chối toàn bộ.
 - App chỉ dùng **publishable/anon key**; **không** nhúng `service_role`.
+- Chức năng chia sẻ cần chạy thêm [migration chia sẻ chỉ xem](sql/20261126_chia_se_ghi_chu_chi_xem.sql); migration tạo bản chụp độc lập, chỉ UID người nhận đọc được và thu hồi sẽ xoá bản chụp.
+- Từ thư mục gốc repo, chạy `Copy-Item nhom03-65ktpm\src\.env.example nhom03-65ktpm\src\.env`, rồi đặt `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` trong file mới. Không commit `.env`; không dùng `service_role`.
+- Khi tạo link, nhập **Firebase UID** của người nhận. Người nhận phải đăng nhập bằng đúng tài khoản đó rồi mới xem được; link điện thoại dùng scheme `smartnote://share/<id>`.
 
 ## 2. Quy ước chung (bắt buộc)
 
@@ -197,7 +200,7 @@ create table if not exists study_stats (
 
 Ghi chú:
 - `study_stats` có thể tính trực tiếp từ `notes` thay vì lưu bảng riêng — chốt lại khi làm #17.
-- `note_shares` cần thêm nhánh policy: người được chia sẻ `select` được `notes` khi có dòng trong `note_shares`.
+- Issue #14 dùng `note_shares` để cấp quyền đọc snapshot; migration bổ sung `source_note_id` liên kết với ID Drift và RPC `create_note_share` / `revoke_note_share`. Client chỉ được đọc danh sách share, không được insert/update/delete trực tiếp.
 
 ## 5. RLS cho toàn bộ bảng
 
@@ -245,11 +248,11 @@ Các bảng còn lại viết policy theo cùng mẫu khi làm issue tương ứ
 
 | Supabase | Drift | Ghi chú |
 |---|---|---|
-| `notes` | `Notes` (`lib/core/database/tables.dart`) | Thiếu `user_id`, `tags` lưu dạng text phân tách bằng dấu phẩy |
+| `notes` | `Notes` (`lib/core/database/tables.dart`) | App lọc theo Firebase UID, tải ghi chú chưa xoá từ Supabase rồi cache vào Drift; `tags` được chuyển từ `text[]` sang text phân tách bằng dấu phẩy |
 | `subjects` | chưa có | Bổ sung khi làm #6 |
 | — | `synced_at` (dự kiến) | Thời điểm đồng bộ gần nhất để biết bản nào mới |
 
-Quy tắc đồng bộ: ghi Supabase trước → cập nhật Drift; khi mất mạng thì ghi Drift và đánh dấu chờ đồng bộ.
+Khi mở danh sách sau khi đăng nhập, app tải ghi chú chưa xoá của Firebase UID hiện tại từ Supabase, upsert vào Drift rồi tiếp tục theo dõi danh sách local. Đây hiện là đồng bộ một chiều từ Supabase về app; thao tác tạo/sửa/xoá trong app vẫn chỉ cập nhật Drift.
 
 ## 8. Cách thêm/sửa schema (checklist)
 
@@ -268,3 +271,5 @@ Quy tắc đồng bộ: ghi Supabase trước → cập nhật Drift; khi mất 
 | 21/11/2026 | Tạo file; chốt `notes`, `subjects`, RLS theo Firebase UID; đề xuất các bảng còn lại |
 | 21/11/2026 | Bỏ cột trạng thái và phân công; viết cấu trúc field cơ bản cho toàn bộ bảng, thành viên tự bổ sung khi làm |
 | 21/11/2026 | Tạo project Supabase `NoteSmart` (`hxzimpvamyzyqdhkxexl`); chạy `docs/sql/20261121_tao_bang_co_ban.sql` — 11 bảng, 12 index, RLS + policy cho tất cả bảng |
+| 26/11/2026 | Issue #14: snapshot ghi chú, quyền đọc theo UID, RPC thu hồi và hướng dẫn cấu hình ứng dụng |
+| 26/11/2026 | Tải ghi chú của Firebase UID hiện tại từ Supabase vào cache Drift khi mở danh sách |

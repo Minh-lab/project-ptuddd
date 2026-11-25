@@ -34,6 +34,9 @@ class NotesDao extends DatabaseAccessor<AppDatabase> with _$NotesDaoMixin {
 
   Future<void> insertNote(NotesCompanion row) => into(notes).insert(row);
 
+  Future<void> upsertSyncedNote(NotesCompanion row) =>
+      into(notes).insertOnConflictUpdate(row);
+
   Future<bool> updateNote(String id, NotesCompanion row) async {
     final affected = await (update(
       notes,

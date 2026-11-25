@@ -1,11 +1,16 @@
 import 'package:drift/drift.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/auth/data/datasources/remote/firebase_auth_data_source.dart';
 import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/notes/data/repositories/note_repository_impl.dart';
+import '../../features/notes/data/datasources/remote/supabase_note_data_source.dart';
+import '../../features/notes/data/repositories/supabase_note_repository.dart';
+import '../../features/notes/data/repositories/unavailable_note_share_repository.dart';
 import '../../features/notes/domain/repositories/note_repository.dart';
+import '../../features/notes/domain/repositories/note_share_repository.dart';
 import '../database/app_database.dart';
 import '../database/notes_dao.dart';
 import '../database/quiz_scores_dao.dart';
@@ -20,6 +25,7 @@ class AppDependencies {
     required this.database,
     required this.notesDao,
     required this.noteRepository,
+    required this.noteShareRepository,
     required this.authRepository,
     required this.quizScoresDao,
   });
@@ -27,14 +33,28 @@ class AppDependencies {
   factory AppDependencies.create({
     QueryExecutor? executor,
     AuthRepository? authRepository,
+    NoteShareRepository? noteShareRepository,
+    SupabaseClient? supabaseClient,
+    String? Function()? currentUserId,
   }) {
     final database = AppDatabase(executor);
     final notesDao = NotesDao(database);
     final quizScoresDao = QuizScoresDao(database);
+    final localNoteRepository = NoteRepositoryImpl(notesDao);
+    final noteRepository = supabaseClient == null
+        ? localNoteRepository
+        : SupabaseNoteRepository(
+            localNoteRepository,
+            notesDao,
+            SupabaseNoteDataSource(supabaseClient),
+            currentUserId ?? () => FirebaseAuth.instance.currentUser?.uid,
+          );
     return AppDependencies._(
       database: database,
       notesDao: notesDao,
-      noteRepository: NoteRepositoryImpl(notesDao),
+      noteRepository: noteRepository,
+      noteShareRepository:
+          noteShareRepository ?? UnavailableNoteShareRepository(),
       authRepository: authRepository ?? _firebaseAuthRepository(),
       quizScoresDao: quizScoresDao,
     );
@@ -49,6 +69,7 @@ class AppDependencies {
   final AppDatabase database;
   final NotesDao notesDao;
   final NoteRepository noteRepository;
+  final NoteShareRepository noteShareRepository;
   final AuthRepository authRepository;
   final QuizScoresDao quizScoresDao;
 

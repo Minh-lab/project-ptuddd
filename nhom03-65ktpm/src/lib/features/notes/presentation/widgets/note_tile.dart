@@ -12,6 +12,7 @@ class NoteTile extends StatelessWidget {
     this.selectionMode = false,
     this.onTap,
     this.onLongPress,
+    this.onShare,
     super.key,
   });
 
@@ -21,6 +22,7 @@ class NoteTile extends StatelessWidget {
   final bool selectionMode;
   final VoidCallback? onTap;
   final VoidCallback? onLongPress;
+  final VoidCallback? onShare;
 
   @override
   Widget build(BuildContext context) {
@@ -52,9 +54,20 @@ class NoteTile extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: theme.textTheme.bodyMedium,
             ),
-      trailing: Text(
-        _formatUpdatedAt(note.updatedAt),
-        style: theme.textTheme.labelSmall,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          if (onShare != null)
+            IconButton(
+              tooltip: 'Chia sẻ ghi chú',
+              icon: const Icon(Icons.share_outlined),
+              onPressed: onShare,
+            ),
+          Text(
+            _formatUpdatedAt(note.updatedAt),
+            style: theme.textTheme.labelSmall,
+          ),
+        ],
       ),
     );
   }

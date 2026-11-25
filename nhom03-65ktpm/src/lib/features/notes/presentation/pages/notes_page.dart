@@ -9,6 +9,7 @@ import '../../domain/services/note_search.dart';
 import '../bloc/notes_cubit.dart';
 import '../bloc/notes_state.dart';
 import '../widgets/note_tile.dart';
+import '../widgets/note_share_dialog.dart';
 import 'note_editor_page.dart';
 import 'quiz_page.dart';
 import '../services/word_export_service.dart';
@@ -19,11 +20,13 @@ import '../services/word_export_service.dart';
 class NotesPage extends StatefulWidget {
   const NotesPage({
     required this.dependencies,
+    required this.currentUserId,
     this.actions = const <Widget>[],
     super.key,
   });
 
   final AppDependencies dependencies;
+  final String currentUserId;
 
   /// Widget hành động trên AppBar, do nơi điều hướng truyền vào (ví dụ nút
   /// đăng xuất). Nhờ vậy feature notes không phải import feature auth.
@@ -174,6 +177,9 @@ class _NotesPageState extends State<NotesPage> {
                             note: note,
                             searchQuery: _searchQuery,
                             selected: selected,
+                            onShare: _selectedIds.isEmpty
+                                ? () => _showShareDialog(note)
+                                : null,
                             onLongPress: () =>
                                 setState(() => _selectedIds.add(note.id)),
                             onTap: () {
@@ -258,6 +264,17 @@ class _NotesPageState extends State<NotesPage> {
     await navigator.push(
       MaterialPageRoute<void>(
         builder: (_) => NoteEditorPage(cubit: cubit, initialKind: kind),
+      ),
+    );
+  }
+
+  Future<void> _showShareDialog(Note note) {
+    return showDialog<void>(
+      context: context,
+      builder: (_) => NoteShareDialog(
+        note: note,
+        ownerId: widget.currentUserId,
+        repository: widget.dependencies.noteShareRepository,
       ),
     );
   }

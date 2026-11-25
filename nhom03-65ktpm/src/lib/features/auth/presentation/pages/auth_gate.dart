@@ -34,6 +34,7 @@ class AuthGate extends StatelessWidget {
             create: (_) => NotesCubit(dependencies.noteRepository)..load(),
             child: NotesPage(
               dependencies: dependencies,
+              currentUserId: state.user!.id,
               actions: const <Widget>[LogoutButton()],
             ),
           );

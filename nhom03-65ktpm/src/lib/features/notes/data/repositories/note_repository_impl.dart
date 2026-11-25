@@ -5,10 +5,10 @@ import '../../domain/entities/note.dart';
 import '../../domain/repositories/note_repository.dart';
 import '../models/note_mapper.dart';
 
-/// Hiện thực [NoteRepository] trên cache cục bộ (Drift).
+/// Hiện thực [NoteRepository] trên dữ liệu cục bộ (Drift).
 ///
-/// Sau này tầng này sẽ gộp thêm `datasources/remote` (Supabase) mà không đổi
-/// interface của domain.
+/// Khi bật Supabase, [SupabaseNoteRepository] phối hợp repository này với dữ
+/// liệu tải về từ xa mà không đổi interface của domain.
 class NoteRepositoryImpl implements NoteRepository {
   NoteRepositoryImpl(this._dao);
 
