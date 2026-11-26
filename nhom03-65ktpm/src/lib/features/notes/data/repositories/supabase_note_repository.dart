@@ -83,6 +83,7 @@ class SupabaseNoteRepository implements NoteRepository {
 
       await _notesDao.upsertSyncedNote(
         note.toCompanion().copyWith(
+          userId: Value(userId),
           deletedAt: const Value<DateTime?>(null),
         ),
       );

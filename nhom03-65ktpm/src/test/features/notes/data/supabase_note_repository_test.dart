@@ -25,7 +25,7 @@ void main() {
   test('watchNotes tải ghi chú theo UID rồi lưu vào Drift', () async {
     final remoteDataSource = _FakeNoteRemoteDataSource(<Note>[_remoteNote]);
     final repository = SupabaseNoteRepository(
-      NoteRepositoryImpl(notesDao),
+      NoteRepositoryImpl(notesDao, 'firebase-user-1'),
       notesDao,
       remoteDataSource,
       () => 'firebase-user-1',
@@ -42,10 +42,11 @@ void main() {
       await loaded.future.timeout(const Duration(seconds: 2));
 
       expect(remoteDataSource.requestedUserId, 'firebase-user-1');
-      final cached = await notesDao.findById(_remoteNote.id);
+      final cached = await notesDao.findById(_remoteNote.id, 'firebase-user-1');
       expect(cached, isNotNull);
       expect(cached!.title, _remoteNote.title);
       expect(cached.content, _remoteNote.content);
+      expect(await notesDao.getAll('another-user'), isEmpty);
     } finally {
       await subscription.cancel();
     }

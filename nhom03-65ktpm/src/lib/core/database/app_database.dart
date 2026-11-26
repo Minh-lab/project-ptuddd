@@ -15,7 +15,7 @@ class AppDatabase extends _$AppDatabase {
     : super(executor ?? driftDatabase(name: 'smart_note'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -25,6 +25,9 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (Migrator m, int from, int to) async {
       if (from < 2) {
         await m.createTable(quizScores);
+      }
+      if (from < 3) {
+        await m.addColumn(notes, notes.userId);
       }
     },
     beforeOpen: (OpeningDetails details) async {

@@ -40,3 +40,4 @@ Pods/
 *~
 .DS_Store
 Thumbs.db
+/firebase-admin-script/serviceAccountKey.json

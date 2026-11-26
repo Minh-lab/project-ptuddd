@@ -7,6 +7,7 @@ import 'package:smart_note/core/error/failure.dart';
 import 'package:smart_note/features/auth/domain/entities/app_user.dart';
 import 'package:smart_note/features/notes/domain/entities/note.dart';
 import 'package:smart_note/features/notes/domain/entities/note_share.dart';
+import 'package:smart_note/features/notes/domain/entities/received_note_share.dart';
 import 'package:smart_note/features/notes/domain/repositories/note_share_repository.dart';
 import 'package:smart_note/features/notes/presentation/widgets/note_share_dialog.dart';
 
@@ -15,34 +16,90 @@ import '../../../support/fake_auth_repository.dart';
 void main() {
   final note = _note();
 
-  testWidgets('Không tạo liên kết nếu chưa nhập UID người nhận', (
-    WidgetTester tester,
-  ) async {
-    final repository = _FakeNoteShareRepository();
-    await _showShareDialog(tester, note, repository);
-
-    await tester.tap(find.text('Tạo liên kết chỉ xem'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Nhập Firebase UID của người nhận.'), findsOneWidget);
-    expect(repository.createdRecipientId, isNull);
-  });
-
-  testWidgets('Tạo liên kết gửi UID và hiển thị URL chỉ xem', (
+  testWidgets('Không tạo chia sẻ nếu email người nhận không hợp lệ', (
     WidgetTester tester,
   ) async {
     final repository = _FakeNoteShareRepository();
     await _showShareDialog(tester, note, repository);
 
     await tester.enterText(
-      find.byKey(const ValueKey<String>('share-recipient-uid')),
-      'uid-recipient',
+      find.byKey(const ValueKey<String>('share-recipient-email')),
+      'not-an-email',
     );
-    await tester.tap(find.text('Tạo liên kết chỉ xem'));
+    await tester.tap(find.text('Gửi vào hộp thư'));
     await tester.pumpAndSettle();
 
-    expect(repository.createdRecipientId, 'uid-recipient');
-    expect(find.text('smartnote://share/share-1'), findsOneWidget);
+    expect(find.text('Email không hợp lệ.'), findsOneWidget);
+    expect(repository.createdRecipientEmail, isNull);
+  });
+
+  testWidgets('Gửi bản chụp vào hộp thư theo email người nhận', (
+    WidgetTester tester,
+  ) async {
+    final repository = _FakeNoteShareRepository();
+    await _showShareDialog(tester, note, repository);
+
+    await tester.enterText(
+      find.byKey(const ValueKey<String>('share-recipient-email')),
+      'Recipient@Example.com',
+    );
+    await tester.tap(find.text('Gửi vào hộp thư'));
+    await tester.pumpAndSettle();
+
+    expect(repository.createdRecipientEmail, 'recipient@example.com');
+    expect(
+      find.text('Đã gửi vào hộp thư của recipient@example.com.'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('Hộp thư hiện bản chụp và mở ở chế độ chỉ xem', (
+    WidgetTester tester,
+  ) async {
+    final authRepository = FakeAuthRepository(
+      initialUser: const AppUser(
+        id: 'uid-recipient',
+        email: 'recipient@example.com',
+      ),
+    );
+    final shareRepository = _FakeNoteShareRepository()
+      ..receivedShares.add(
+        ReceivedNoteShare(
+          id: 'share-1',
+          noteId: 'snapshot-1',
+          ownerId: 'uid-owner',
+          ownerEmail: 'owner@example.com',
+          title: 'Bản chụp ghi chú',
+          kind: NoteKind.note,
+          createdAt: DateTime(2026, 11, 26),
+        ),
+      );
+    final dependencies = AppDependencies.create(
+      executor: NativeDatabase.memory(),
+      authRepository: authRepository,
+      noteShareRepository: shareRepository,
+    );
+
+    try {
+      await tester.pumpWidget(SmartNoteApp(dependencies: dependencies));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Hộp thư'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Bản chụp ghi chú'), findsOneWidget);
+      expect(find.text('Từ owner@example.com · Chỉ xem'), findsOneWidget);
+
+      await tester.tap(find.text('Bản chụp ghi chú'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Nội dung chỉ xem'), findsOneWidget);
+      expect(find.byTooltip('Sửa ghi chú'), findsNothing);
+    } finally {
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpAndSettle();
+      await tester.runAsync(dependencies.dispose);
+      await tester.runAsync(authRepository.dispose);
+    }
   });
 
   testWidgets('Deep link mở bản chụp ở chế độ chỉ xem cho UID đang đăng nhập', (
@@ -163,9 +220,10 @@ Note _note() {
 }
 
 class _FakeNoteShareRepository implements NoteShareRepository {
-  String? createdRecipientId;
+  String? createdRecipientEmail;
   String? openedRecipientId;
   final List<NoteShare> shares = <NoteShare>[];
+  final List<ReceivedNoteShare> receivedShares = <ReceivedNoteShare>[];
 
   @override
   Future<List<NoteShare>> listForNote({
@@ -176,17 +234,23 @@ class _FakeNoteShareRepository implements NoteShareRepository {
   }
 
   @override
+  Future<List<ReceivedNoteShare>> listReceived() async {
+    return List<ReceivedNoteShare>.of(receivedShares);
+  }
+
+  @override
   Future<NoteShare> create({
     required Note note,
-    required String recipientId,
+    required String recipientEmail,
   }) async {
-    createdRecipientId = recipientId;
+    createdRecipientEmail = recipientEmail;
     final share = NoteShare(
       id: 'share-1',
       noteId: 'snapshot-1',
       sourceNoteId: note.id,
       ownerId: 'uid-owner',
-      recipientId: recipientId,
+      recipientId: 'uid-recipient',
+      recipientEmail: recipientEmail,
       createdAt: DateTime(2026, 11, 26),
     );
     shares.add(share);

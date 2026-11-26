@@ -53,14 +53,15 @@ void main() {
       executor: NativeDatabase.memory(),
       authRepository: authRepository,
     );
-    await dependencies.noteRepository.createNote(
+    final noteRepository = dependencies.noteRepositoryForUser('uid-search');
+    await noteRepository.createNote(
       _note(
         id: 'vietnamese',
         title: 'Đọc Sách Tiếng Việt',
         content: 'Ôn tập Toán',
       ),
     );
-    await dependencies.noteRepository.createNote(
+    await noteRepository.createNote(
       _note(id: 'physics', title: 'Vật lý', content: 'Công thức chuyển động'),
     );
 

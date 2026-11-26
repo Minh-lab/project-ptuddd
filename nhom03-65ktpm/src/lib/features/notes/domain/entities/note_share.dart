@@ -8,6 +8,7 @@ class NoteShare extends Equatable {
     required this.sourceNoteId,
     required this.ownerId,
     required this.recipientId,
+    this.recipientEmail,
     required this.createdAt,
   });
 
@@ -16,6 +17,7 @@ class NoteShare extends Equatable {
   final String sourceNoteId;
   final String ownerId;
   final String recipientId;
+  final String? recipientEmail;
   final DateTime createdAt;
 
   @override
@@ -25,6 +27,7 @@ class NoteShare extends Equatable {
     sourceNoteId,
     ownerId,
     recipientId,
+    recipientEmail,
     createdAt,
   ];
 }

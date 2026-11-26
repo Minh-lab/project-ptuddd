@@ -1,12 +1,12 @@
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/note.dart';
 import '../../domain/entities/note_share.dart';
+import '../../domain/entities/received_note_share.dart';
 import '../../domain/repositories/note_share_repository.dart';
 
 class UnavailableNoteShareRepository implements NoteShareRepository {
   UnavailableNoteShareRepository([
-    this.message =
-        'Chưa cấu hình Supabase. Điền SUPABASE_URL và SUPABASE_PUBLISHABLE_KEY trong src/.env.',
+    this.message = 'Chưa cấu hình Supabase. Điền SUPABASE_URL và SUPABASE_PUBLISHABLE_KEY trong src/.env.',
   ]);
 
   final String message;
@@ -22,9 +22,14 @@ class UnavailableNoteShareRepository implements NoteShareRepository {
   }
 
   @override
+  Future<List<ReceivedNoteShare>> listReceived() async {
+    _throwUnavailable();
+  }
+
+  @override
   Future<NoteShare> create({
     required Note note,
-    required String recipientId,
+    required String recipientEmail,
   }) async {
     _throwUnavailable();
   }

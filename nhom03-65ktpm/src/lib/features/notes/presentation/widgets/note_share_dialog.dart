@@ -1,8 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/utils/form_validators.dart';
 import '../../domain/entities/note.dart';
 import '../../domain/entities/note_share.dart';
 import '../../domain/repositories/note_share_repository.dart';
@@ -27,7 +26,7 @@ class _NoteShareDialogState extends State<NoteShareDialog> {
   final TextEditingController _recipientController = TextEditingController();
   late Future<List<NoteShare>> _sharesFuture;
   bool _isCreating = false;
-  String? _createdLink;
+  String? _sentToEmail;
   String? _errorMessage;
 
   @override
@@ -50,31 +49,26 @@ class _NoteShareDialogState extends State<NoteShareDialog> {
   }
 
   Future<void> _createShare() async {
-    final recipientId = _recipientController.text.trim();
-    if (recipientId.isEmpty) {
-      setState(() => _errorMessage = 'Nhập Firebase UID của người nhận.');
-      return;
-    }
-    if (recipientId == widget.ownerId) {
-      setState(
-        () => _errorMessage = 'Không thể chia sẻ ghi chú cho chính bạn.',
-      );
+    final recipientEmail = _recipientController.text.trim().toLowerCase();
+    final emailError = FormValidators.email(recipientEmail);
+    if (emailError != null) {
+      setState(() => _errorMessage = emailError);
       return;
     }
 
     setState(() {
       _isCreating = true;
       _errorMessage = null;
-      _createdLink = null;
+      _sentToEmail = null;
     });
     try {
       final share = await widget.repository.create(
         note: widget.note,
-        recipientId: recipientId,
+        recipientEmail: recipientEmail,
       );
       if (!mounted) return;
       setState(() {
-        _createdLink = _linkFor(share.id);
+        _sentToEmail = share.recipientEmail ?? recipientEmail;
         _sharesFuture = _loadShares();
         _recipientController.clear();
       });
@@ -91,8 +85,8 @@ class _NoteShareDialogState extends State<NoteShareDialog> {
     final shouldRevoke = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Thu hồi liên kết?'),
-        content: const Text('Người nhận sẽ không thể mở bản ghi chú này nữa.'),
+        title: const Text('Thu hồi quyền xem?'),
+        content: const Text('Ghi chú sẽ bị gỡ khỏi hộp thư của người nhận.'),
         actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -113,46 +107,10 @@ class _NoteShareDialogState extends State<NoteShareDialog> {
       if (!mounted) return;
       setState(() {
         _sharesFuture = _loadShares();
-        if (_createdLink == _linkFor(share.id)) _createdLink = null;
       });
     } on Failure catch (error) {
       if (mounted) setState(() => _errorMessage = error.message);
     }
-  }
-
-  Future<void> _copyLink(String link) async {
-    try {
-      await Clipboard.setData(ClipboardData(text: link));
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Đã sao chép liên kết.')));
-      }
-    } on PlatformException {
-      if (mounted) {
-        setState(
-          () =>
-              _errorMessage = 'Không thể sao chép liên kết trên thiết bị này.',
-        );
-      }
-    } on MissingPluginException {
-      if (mounted) {
-        setState(() => _errorMessage = 'Tính năng sao chép chưa khả dụng.');
-      }
-    }
-  }
-
-  String _linkFor(String shareId) {
-    if (kIsWeb) {
-      return Uri.base
-          .replace(queryParameters: <String, String>{'share': shareId})
-          .toString();
-    }
-    return Uri(
-      scheme: 'smartnote',
-      host: 'share',
-      path: '/$shareId',
-    ).toString();
   }
 
   @override
@@ -167,17 +125,19 @@ class _NoteShareDialogState extends State<NoteShareDialog> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: <Widget>[
               const Text(
-                'Chỉ tài khoản có Firebase UID này mới xem được bản chụp ghi chú.',
+                'Gửi bản chụp chỉ xem vào hộp thư SmartNote của email này.',
               ),
               const SizedBox(height: 12),
               TextField(
-                key: const ValueKey<String>('share-recipient-uid'),
+                key: const ValueKey<String>('share-recipient-email'),
                 controller: _recipientController,
                 enabled: !_isCreating,
                 decoration: const InputDecoration(
-                  labelText: 'Firebase UID người nhận',
+                  labelText: 'Email người nhận',
                   border: OutlineInputBorder(),
                 ),
+                keyboardType: TextInputType.emailAddress,
+                autocorrect: false,
                 textInputAction: TextInputAction.done,
                 onSubmitted: (_) => _createShare(),
               ),
@@ -190,21 +150,12 @@ class _NoteShareDialogState extends State<NoteShareDialog> {
                         height: 18,
                         child: CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Icon(Icons.link),
-                label: const Text('Tạo liên kết chỉ xem'),
+                    : const Icon(Icons.send_outlined),
+                label: const Text('Gửi vào hộp thư'),
               ),
-              if (_createdLink != null) ...<Widget>[
+              if (_sentToEmail != null) ...<Widget>[
                 const SizedBox(height: 12),
-                const Text('Liên kết mới (bản chụp tại thời điểm chia sẻ):'),
-                SelectableText(_createdLink!),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton.icon(
-                    onPressed: () => _copyLink(_createdLink!),
-                    icon: const Icon(Icons.copy),
-                    label: const Text('Sao chép'),
-                  ),
-                ),
+                Text('Đã gửi vào hộp thư của $_sentToEmail.'),
               ],
               if (_errorMessage != null) ...<Widget>[
                 const SizedBox(height: 8),
@@ -214,16 +165,15 @@ class _NoteShareDialogState extends State<NoteShareDialog> {
                 ),
               ],
               const Divider(height: 24),
-              Text(
-                'Liên kết đang hoạt động',
-                style: Theme.of(context).textTheme.titleSmall,
-              ),
+              Text('Đã chia sẻ', style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               FutureBuilder<List<NoteShare>>(
                 future: _sharesFuture,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
-                    return Text('Không thể tải liên kết: ${snapshot.error}');
+                    return Text(
+                      'Không thể tải danh sách chia sẻ: ${snapshot.error}',
+                    );
                   }
                   if (!snapshot.hasData) {
                     return const Center(child: CircularProgressIndicator());
@@ -240,11 +190,10 @@ class _NoteShareDialogState extends State<NoteShareDialog> {
                       separatorBuilder: (_, _) => const Divider(height: 1),
                       itemBuilder: (context, index) {
                         final share = shares[index];
-                        final link = _linkFor(share.id);
                         return ListTile(
                           contentPadding: EdgeInsets.zero,
                           title: Text(
-                            'UID: ${share.recipientId}',
+                            share.recipientEmail ?? share.recipientId,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -254,15 +203,9 @@ class _NoteShareDialogState extends State<NoteShareDialog> {
                             overflow: TextOverflow.ellipsis,
                           ),
                           trailing: Wrap(
-                            spacing: 0,
                             children: <Widget>[
                               IconButton(
-                                tooltip: 'Sao chép liên kết',
-                                onPressed: () => _copyLink(link),
-                                icon: const Icon(Icons.copy_outlined),
-                              ),
-                              IconButton(
-                                tooltip: 'Thu hồi liên kết',
+                                tooltip: 'Thu hồi quyền xem',
                                 onPressed: () => _revoke(share),
                                 icon: const Icon(Icons.link_off),
                               ),

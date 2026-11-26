@@ -17,6 +17,15 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _userIdMeta = const VerificationMeta('userId');
+  @override
+  late final GeneratedColumn<String> userId = GeneratedColumn<String>(
+    'user_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _titleMeta = const VerificationMeta('title');
   @override
   late final GeneratedColumn<String> title = GeneratedColumn<String>(
@@ -108,6 +117,7 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
   @override
   List<GeneratedColumn> get $columns => [
     id,
+    userId,
     title,
     content,
     subjectId,
@@ -133,6 +143,12 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
       context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
     } else if (isInserting) {
       context.missing(_idMeta);
+    }
+    if (data.containsKey('user_id')) {
+      context.handle(
+        _userIdMeta,
+        userId.isAcceptableOrUnknown(data['user_id']!, _userIdMeta),
+      );
     }
     if (data.containsKey('title')) {
       context.handle(
@@ -195,6 +211,10 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
         DriftSqlType.string,
         data['${effectivePrefix}id'],
       )!,
+      userId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}user_id'],
+      ),
       title: attachedDatabase.typeMapping.read(
         DriftSqlType.string,
         data['${effectivePrefix}title'],
@@ -238,6 +258,7 @@ class $NotesTable extends Notes with TableInfo<$NotesTable, NoteRow> {
 
 class NoteRow extends DataClass implements Insertable<NoteRow> {
   final String id;
+  final String? userId;
   final String title;
   final String content;
   final String? subjectId;
@@ -252,6 +273,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
   final DateTime? deletedAt;
   const NoteRow({
     required this.id,
+    this.userId,
     required this.title,
     required this.content,
     this.subjectId,
@@ -265,6 +287,9 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
     map['id'] = Variable<String>(id);
+    if (!nullToAbsent || userId != null) {
+      map['user_id'] = Variable<String>(userId);
+    }
     map['title'] = Variable<String>(title);
     map['content'] = Variable<String>(content);
     if (!nullToAbsent || subjectId != null) {
@@ -283,6 +308,9 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
   NotesCompanion toCompanion(bool nullToAbsent) {
     return NotesCompanion(
       id: Value(id),
+      userId: userId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(userId),
       title: Value(title),
       content: Value(content),
       subjectId: subjectId == null && nullToAbsent
@@ -305,6 +333,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return NoteRow(
       id: serializer.fromJson<String>(json['id']),
+      userId: serializer.fromJson<String?>(json['userId']),
       title: serializer.fromJson<String>(json['title']),
       content: serializer.fromJson<String>(json['content']),
       subjectId: serializer.fromJson<String?>(json['subjectId']),
@@ -320,6 +349,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     serializer ??= driftRuntimeOptions.defaultSerializer;
     return <String, dynamic>{
       'id': serializer.toJson<String>(id),
+      'userId': serializer.toJson<String?>(userId),
       'title': serializer.toJson<String>(title),
       'content': serializer.toJson<String>(content),
       'subjectId': serializer.toJson<String?>(subjectId),
@@ -333,6 +363,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
 
   NoteRow copyWith({
     String? id,
+    Value<String?> userId = const Value.absent(),
     String? title,
     String? content,
     Value<String?> subjectId = const Value.absent(),
@@ -343,6 +374,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
     Value<DateTime?> deletedAt = const Value.absent(),
   }) => NoteRow(
     id: id ?? this.id,
+    userId: userId.present ? userId.value : this.userId,
     title: title ?? this.title,
     content: content ?? this.content,
     subjectId: subjectId.present ? subjectId.value : this.subjectId,
@@ -355,6 +387,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
   NoteRow copyWithCompanion(NotesCompanion data) {
     return NoteRow(
       id: data.id.present ? data.id.value : this.id,
+      userId: data.userId.present ? data.userId.value : this.userId,
       title: data.title.present ? data.title.value : this.title,
       content: data.content.present ? data.content.value : this.content,
       subjectId: data.subjectId.present ? data.subjectId.value : this.subjectId,
@@ -370,6 +403,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
   String toString() {
     return (StringBuffer('NoteRow(')
           ..write('id: $id, ')
+          ..write('userId: $userId, ')
           ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('subjectId: $subjectId, ')
@@ -385,6 +419,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
   @override
   int get hashCode => Object.hash(
     id,
+    userId,
     title,
     content,
     subjectId,
@@ -399,6 +434,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
       identical(this, other) ||
       (other is NoteRow &&
           other.id == this.id &&
+          other.userId == this.userId &&
           other.title == this.title &&
           other.content == this.content &&
           other.subjectId == this.subjectId &&
@@ -411,6 +447,7 @@ class NoteRow extends DataClass implements Insertable<NoteRow> {
 
 class NotesCompanion extends UpdateCompanion<NoteRow> {
   final Value<String> id;
+  final Value<String?> userId;
   final Value<String> title;
   final Value<String> content;
   final Value<String?> subjectId;
@@ -422,6 +459,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
   final Value<int> rowid;
   const NotesCompanion({
     this.id = const Value.absent(),
+    this.userId = const Value.absent(),
     this.title = const Value.absent(),
     this.content = const Value.absent(),
     this.subjectId = const Value.absent(),
@@ -434,6 +472,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
   });
   NotesCompanion.insert({
     required String id,
+    this.userId = const Value.absent(),
     this.title = const Value.absent(),
     this.content = const Value.absent(),
     this.subjectId = const Value.absent(),
@@ -446,6 +485,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
   }) : id = Value(id);
   static Insertable<NoteRow> custom({
     Expression<String>? id,
+    Expression<String>? userId,
     Expression<String>? title,
     Expression<String>? content,
     Expression<String>? subjectId,
@@ -458,6 +498,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
+      if (userId != null) 'user_id': userId,
       if (title != null) 'title': title,
       if (content != null) 'content': content,
       if (subjectId != null) 'subject_id': subjectId,
@@ -472,6 +513,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
 
   NotesCompanion copyWith({
     Value<String>? id,
+    Value<String?>? userId,
     Value<String>? title,
     Value<String>? content,
     Value<String?>? subjectId,
@@ -484,6 +526,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
   }) {
     return NotesCompanion(
       id: id ?? this.id,
+      userId: userId ?? this.userId,
       title: title ?? this.title,
       content: content ?? this.content,
       subjectId: subjectId ?? this.subjectId,
@@ -501,6 +544,9 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
     final map = <String, Expression>{};
     if (id.present) {
       map['id'] = Variable<String>(id.value);
+    }
+    if (userId.present) {
+      map['user_id'] = Variable<String>(userId.value);
     }
     if (title.present) {
       map['title'] = Variable<String>(title.value);
@@ -536,6 +582,7 @@ class NotesCompanion extends UpdateCompanion<NoteRow> {
   String toString() {
     return (StringBuffer('NotesCompanion(')
           ..write('id: $id, ')
+          ..write('userId: $userId, ')
           ..write('title: $title, ')
           ..write('content: $content, ')
           ..write('subjectId: $subjectId, ')
@@ -989,6 +1036,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
 
 typedef $$NotesTableCreateCompanionBuilder = NotesCompanion Function({
   required String id,
+  Value<String?> userId,
   Value<String> title,
   Value<String> content,
   Value<String?> subjectId,
@@ -1001,6 +1049,7 @@ typedef $$NotesTableCreateCompanionBuilder = NotesCompanion Function({
 });
 typedef $$NotesTableUpdateCompanionBuilder = NotesCompanion Function({
   Value<String> id,
+  Value<String?> userId,
   Value<String> title,
   Value<String> content,
   Value<String?> subjectId,
@@ -1022,6 +1071,11 @@ class $$NotesTableFilterComposer extends Composer<_$AppDatabase, $NotesTable> {
   });
   ColumnFilters<String> get id => $composableBuilder(
     column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get userId => $composableBuilder(
+    column: $table.userId,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -1080,6 +1134,11 @@ class $$NotesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get userId => $composableBuilder(
+    column: $table.userId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<String> get title => $composableBuilder(
     column: $table.title,
     builder: (column) => ColumnOrderings(column),
@@ -1132,6 +1191,9 @@ class $$NotesTableAnnotationComposer
   });
   GeneratedColumn<String> get id =>
       $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get userId =>
+      $composableBuilder(column: $table.userId, builder: (column) => column);
 
   GeneratedColumn<String> get title =>
       $composableBuilder(column: $table.title, builder: (column) => column);
@@ -1187,6 +1249,7 @@ class $$NotesTableTableManager
           updateCompanionCallback:
               ({
                 Value<String> id = const Value.absent(),
+                Value<String?> userId = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> content = const Value.absent(),
                 Value<String?> subjectId = const Value.absent(),
@@ -1198,6 +1261,7 @@ class $$NotesTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => NotesCompanion(
                 id: id,
+                userId: userId,
                 title: title,
                 content: content,
                 subjectId: subjectId,
@@ -1211,6 +1275,7 @@ class $$NotesTableTableManager
           createCompanionCallback:
               ({
                 required String id,
+                Value<String?> userId = const Value.absent(),
                 Value<String> title = const Value.absent(),
                 Value<String> content = const Value.absent(),
                 Value<String?> subjectId = const Value.absent(),
@@ -1222,6 +1287,7 @@ class $$NotesTableTableManager
                 Value<int> rowid = const Value.absent(),
               }) => NotesCompanion.insert(
                 id: id,
+                userId: userId,
                 title: title,
                 content: content,
                 subjectId: subjectId,

@@ -8,6 +8,8 @@ import 'package:drift/drift.dart';
 class Notes extends Table {
   TextColumn get id => text()();
 
+  TextColumn get userId => text().nullable()();
+
   TextColumn get title => text().withDefault(const Constant(''))();
 
   TextColumn get content => text().withDefault(const Constant(''))();

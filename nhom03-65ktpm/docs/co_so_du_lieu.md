@@ -20,9 +20,9 @@
 - Policy dùng `(select auth.jwt() ->> 'sub')`, **không** dùng `auth.uid()`.
 - User Firebase phải có custom claim `role = "authenticated"`, nếu không request chạy như `anon` và RLS từ chối toàn bộ.
 - App chỉ dùng **publishable/anon key**; **không** nhúng `service_role`.
-- Chức năng chia sẻ cần chạy thêm [migration chia sẻ chỉ xem](sql/20261126_chia_se_ghi_chu_chi_xem.sql); migration tạo bản chụp độc lập, chỉ UID người nhận đọc được và thu hồi sẽ xoá bản chụp.
+- Chức năng chia sẻ/hộp thư cần chạy lần lượt [migration chia sẻ chỉ xem](sql/20261126_chia_se_ghi_chu_chi_xem.sql), [migration mở bản chụp cho người nhận](sql/20261126_mo_ban_chup_ghi_chu_duoc_chia_se.sql) và [migration chia sẻ bằng email](sql/20261126_chia_se_bang_email_hop_thu.sql). App đồng bộ email của tài khoản Firebase hiện tại vào `profiles`; RPC ánh xạ email người nhận sang UID, tạo bản chụp và liệt kê hộp thư theo UID trong token.
 - Từ thư mục gốc repo, chạy `Copy-Item nhom03-65ktpm\src\.env.example nhom03-65ktpm\src\.env`, rồi đặt `SUPABASE_URL` và `SUPABASE_PUBLISHABLE_KEY` trong file mới. Không commit `.env`; không dùng `service_role`.
-- Khi tạo link, nhập **Firebase UID** của người nhận. Người nhận phải đăng nhập bằng đúng tài khoản đó rồi mới xem được; link điện thoại dùng scheme `smartnote://share/<id>`.
+- Khi chia sẻ, nhập email đã đăng ký SmartNote. Người nhận đăng nhập đúng email đó rồi xem bản chụp trong tab **Hộp thư**; không cần gửi link thủ công.
 
 ## 2. Quy ước chung (bắt buộc)
 
@@ -248,11 +248,13 @@ Các bảng còn lại viết policy theo cùng mẫu khi làm issue tương ứ
 
 | Supabase | Drift | Ghi chú |
 |---|---|---|
-| `notes` | `Notes` (`lib/core/database/tables.dart`) | App lọc theo Firebase UID, tải ghi chú chưa xoá từ Supabase rồi cache vào Drift; `tags` được chuyển từ `text[]` sang text phân tách bằng dấu phẩy |
+| `notes` | `Notes` (`lib/core/database/tables.dart`) | Drift lưu `user_id` để phân vùng cache theo Firebase UID; ghi chú cũ chưa gắn UID được giữ trong SQLite nhưng ẩn khỏi danh sách; `tags` được chuyển từ `text[]` sang text phân tách bằng dấu phẩy |
+| `profiles` | — | Email và Firebase UID của tài khoản hiện tại được đồng bộ qua RPC `sync_my_profile` để phân giải người nhận khi chia sẻ |
+| `note_shares` | — | Lưu UID/email người nhận; RPC trả danh sách hộp thư chỉ cho UID người nhận |
 | `subjects` | chưa có | Bổ sung khi làm #6 |
 | — | `synced_at` (dự kiến) | Thời điểm đồng bộ gần nhất để biết bản nào mới |
 
-Khi mở danh sách sau khi đăng nhập, app tải ghi chú chưa xoá của Firebase UID hiện tại từ Supabase, upsert vào Drift rồi tiếp tục theo dõi danh sách local. Đây hiện là đồng bộ một chiều từ Supabase về app; thao tác tạo/sửa/xoá trong app vẫn chỉ cập nhật Drift.
+Khi mở danh sách sau khi đăng nhập, app tải ghi chú chưa xoá của Firebase UID hiện tại từ Supabase, upsert vào Drift với UID chủ sở hữu rồi chỉ theo dõi các dòng local của UID đó. Đây hiện là đồng bộ một chiều từ Supabase về app; thao tác tạo/sửa/xoá trong app vẫn chỉ cập nhật Drift.
 
 ## 8. Cách thêm/sửa schema (checklist)
 
@@ -273,3 +275,6 @@ Khi mở danh sách sau khi đăng nhập, app tải ghi chú chưa xoá của F
 | 21/11/2026 | Tạo project Supabase `NoteSmart` (`hxzimpvamyzyqdhkxexl`); chạy `docs/sql/20261121_tao_bang_co_ban.sql` — 11 bảng, 12 index, RLS + policy cho tất cả bảng |
 | 26/11/2026 | Issue #14: snapshot ghi chú, quyền đọc theo UID, RPC thu hồi và hướng dẫn cấu hình ứng dụng |
 | 26/11/2026 | Tải ghi chú của Firebase UID hiện tại từ Supabase vào cache Drift khi mở danh sách |
+| 26/11/2026 | Mở bản chụp chia sẻ qua RPC chỉ cho Firebase UID người nhận |
+| 26/11/2026 | Chia sẻ theo email và thêm hộp thư bản chụp chỉ xem trong app |
+| 26/11/2026 | Phân vùng cache Drift theo Firebase UID; giữ nhưng ẩn các dòng cache cũ chưa gắn UID |

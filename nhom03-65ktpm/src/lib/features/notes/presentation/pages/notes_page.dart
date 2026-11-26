@@ -12,6 +12,7 @@ import '../widgets/note_tile.dart';
 import '../widgets/note_share_dialog.dart';
 import 'note_editor_page.dart';
 import 'quiz_page.dart';
+import 'shared_notes_page.dart';
 import '../services/word_export_service.dart';
 
 /// Màn hình chính: danh sách ghi chú đọc từ Drift.
@@ -69,7 +70,13 @@ class _NotesPageState extends State<NotesPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _selectedIds.isEmpty ? 'SmartNote' : '${_selectedIds.length} đã chọn',
+          _selectedIds.isNotEmpty
+              ? '${_selectedIds.length} đã chọn'
+              : _tabIndex == 1
+              ? 'Hộp thư'
+              : _tabIndex == 2
+              ? 'Trắc nghiệm'
+              : 'SmartNote',
         ),
         actions: <Widget>[
           ...(_selectedIds.isEmpty
@@ -210,6 +217,11 @@ class _NotesPageState extends State<NotesPage> {
                 ),
               ],
             )
+          : _tabIndex == 1
+          ? SharedNotesPage(
+              repository: widget.dependencies.noteShareRepository,
+              recipientId: widget.currentUserId,
+            )
           : QuizPage(
               notesCubit: cubit,
               scoresDao: widget.dependencies.quizScoresDao,
@@ -228,6 +240,10 @@ class _NotesPageState extends State<NotesPage> {
           NavigationDestination(
             icon: Icon(Icons.note_outlined),
             label: 'Ghi chú',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.inbox_outlined),
+            label: 'Hộp thư',
           ),
           NavigationDestination(
             icon: Icon(Icons.quiz_outlined),

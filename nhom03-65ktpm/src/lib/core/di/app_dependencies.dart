@@ -24,7 +24,7 @@ class AppDependencies {
   AppDependencies._({
     required this.database,
     required this.notesDao,
-    required this.noteRepository,
+    required this.noteRepositoryForUser,
     required this.noteShareRepository,
     required this.authRepository,
     required this.quizScoresDao,
@@ -40,19 +40,24 @@ class AppDependencies {
     final database = AppDatabase(executor);
     final notesDao = NotesDao(database);
     final quizScoresDao = QuizScoresDao(database);
-    final localNoteRepository = NoteRepositoryImpl(notesDao);
-    final noteRepository = supabaseClient == null
-        ? localNoteRepository
-        : SupabaseNoteRepository(
-            localNoteRepository,
-            notesDao,
-            SupabaseNoteDataSource(supabaseClient),
-            currentUserId ?? () => FirebaseAuth.instance.currentUser?.uid,
-          );
+    final resolveCurrentUserId =
+        currentUserId ?? () => FirebaseAuth.instance.currentUser?.uid;
+    final remoteDataSource = supabaseClient == null
+        ? null
+        : SupabaseNoteDataSource(supabaseClient);
     return AppDependencies._(
       database: database,
       notesDao: notesDao,
-      noteRepository: noteRepository,
+      noteRepositoryForUser: (String userId) {
+        final localNoteRepository = NoteRepositoryImpl(notesDao, userId);
+        if (remoteDataSource == null) return localNoteRepository;
+        return SupabaseNoteRepository(
+          localNoteRepository,
+          notesDao,
+          remoteDataSource,
+          () => resolveCurrentUserId() == userId ? userId : null,
+        );
+      },
       noteShareRepository:
           noteShareRepository ?? UnavailableNoteShareRepository(),
       authRepository: authRepository ?? _firebaseAuthRepository(),
@@ -68,7 +73,7 @@ class AppDependencies {
 
   final AppDatabase database;
   final NotesDao notesDao;
-  final NoteRepository noteRepository;
+  final NoteRepository Function(String userId) noteRepositoryForUser;
   final NoteShareRepository noteShareRepository;
   final AuthRepository authRepository;
   final QuizScoresDao quizScoresDao;

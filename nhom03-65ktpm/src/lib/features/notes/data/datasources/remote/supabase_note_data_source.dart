@@ -13,6 +13,7 @@ class SupabaseNoteDataSource implements NoteRemoteDataSource {
   @override
   Future<List<Note>> fetchNotes(String userId) async {
     try {
+      await _client.rpc('sync_my_profile');
       final rows = await _client
           .from('notes')
           .select(
