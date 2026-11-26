@@ -15,15 +15,21 @@ import '../../features/notes/data/datasources/remote/supabase_notes_remote_data_
 import '../../features/notes/data/repositories/note_repository_impl.dart';
 import '../../features/notes/data/repositories/synced_note_repository.dart';
 import '../../features/notes/domain/repositories/note_repository.dart';
+import '../../features/subjects/data/datasources/remote/supabase_subjects_remote_data_source.dart';
+import '../../features/subjects/data/repositories/subject_repository_impl.dart';
+import '../../features/subjects/domain/repositories/note_classification_repository.dart';
+import '../../features/subjects/domain/repositories/subject_repository.dart';
 import '../../features/summary/data/datasources/remote/ai_summary_remote_data_source.dart';
 import '../../features/summary/data/repositories/summary_repository_impl.dart';
 import '../../features/summary/domain/repositories/summary_repository.dart';
 import '../database/app_database.dart';
 import '../database/notes_dao.dart';
 import '../database/quiz_scores_dao.dart';
+import '../database/subjects_dao.dart';
 import '../error/failure.dart';
 import '../services/ai_client.dart';
 import '../sync/sync_status.dart';
+import 'note_classification_adapter.dart';
 
 /// Nơi duy nhất khởi tạo database và repository.
 ///
@@ -43,6 +49,8 @@ class AppDependencies {
     required this.syncedNotes,
     required this.accountDatabases,
     required this.syncSession,
+    required this.subjectRepository,
+    required this.noteClassificationRepository,
   });
 
   /// [supabaseClient] chỉ khác `null` khi app được chạy kèm
@@ -88,13 +96,16 @@ class AppDependencies {
             monitor: syncMonitor,
           );
 
+    final NoteRepository noteRepository =
+        syncedNotes ?? NoteRepositoryImpl(notesDao);
+
     return AppDependencies._(
       () => QuizScoresDao(
         remote == null ? database : databaseFor(resolvedAuth.currentUser?.id),
       ),
       database: database,
       notesDao: notesDao,
-      noteRepository: syncedNotes ?? NoteRepositoryImpl(notesDao),
+      noteRepository: noteRepository,
       authRepository: resolvedAuth,
       aiClient: resolvedAiClient,
       summaryRepository: SummaryRepositoryImpl(
@@ -108,6 +119,17 @@ class AppDependencies {
           : resolvedAuth.authStateChanges().listen((_) {
               unawaited(syncedNotes.start());
             }),
+      // Môn học (#6) dùng cùng database với ghi chú của tài khoản hiện tại.
+      subjectRepository: SubjectRepositoryImpl(
+        dao: () => SubjectsDao(
+          remote == null ? database : databaseFor(resolvedAuth.currentUser?.id),
+        ),
+        remote: supabaseClient == null
+            ? null
+            : SupabaseSubjectsRemoteDataSource(supabaseClient),
+        currentUserId: () => resolvedAuth.currentUser?.id,
+      ),
+      noteClassificationRepository: NoteClassificationAdapter(noteRepository),
     );
   }
 
@@ -158,6 +180,8 @@ class AppDependencies {
 
   final Map<String, AppDatabase> accountDatabases;
   final StreamSubscription<AppUser?>? syncSession;
+  final SubjectRepository subjectRepository;
+  final NoteClassificationRepository noteClassificationRepository;
 
   Future<void> dispose() async {
     aiClient.close();
