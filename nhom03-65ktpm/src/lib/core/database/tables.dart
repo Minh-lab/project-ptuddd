@@ -30,6 +30,28 @@ class Notes extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Môn học dùng để phân loại ghi chú (#6), ánh xạ bảng `subjects` của Supabase.
+///
+/// Ghi chú tham chiếu môn qua `Notes.subjectId`; xoá môn là xoá mềm.
+@DataClassName('SubjectRow')
+class Subjects extends Table {
+  TextColumn get id => text()();
+
+  TextColumn get name => text()();
+
+  /// Màu hiển thị dạng `#RRGGBB`.
+  TextColumn get color => text().nullable()();
+
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DataClassName('QuizScoreRow')
 class QuizScores extends Table {
   TextColumn get id => text()();
