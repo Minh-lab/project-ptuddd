@@ -6,9 +6,14 @@ import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/notes/data/repositories/note_repository_impl.dart';
 import '../../features/notes/domain/repositories/note_repository.dart';
+import '../../features/subjects/data/repositories/note_classification_repository_impl.dart';
+import '../../features/subjects/data/repositories/subject_repository_impl.dart';
+import '../../features/subjects/domain/repositories/note_classification_repository.dart';
+import '../../features/subjects/domain/repositories/subject_repository.dart';
 import '../database/app_database.dart';
 import '../database/notes_dao.dart';
 import '../database/quiz_scores_dao.dart';
+import '../database/subjects_dao.dart';
 
 /// Nơi duy nhất khởi tạo database và repository.
 ///
@@ -22,6 +27,8 @@ class AppDependencies {
     required this.noteRepository,
     required this.authRepository,
     required this.quizScoresDao,
+    required this.subjectRepository,
+    required this.noteClassificationRepository,
   });
 
   factory AppDependencies.create({
@@ -37,6 +44,8 @@ class AppDependencies {
       noteRepository: NoteRepositoryImpl(notesDao),
       authRepository: authRepository ?? _firebaseAuthRepository(),
       quizScoresDao: quizScoresDao,
+      subjectRepository: SubjectRepositoryImpl(SubjectsDao(database)),
+      noteClassificationRepository: NoteClassificationRepositoryImpl(notesDao),
     );
   }
 
@@ -51,6 +60,8 @@ class AppDependencies {
   final NoteRepository noteRepository;
   final AuthRepository authRepository;
   final QuizScoresDao quizScoresDao;
+  final SubjectRepository subjectRepository;
+  final NoteClassificationRepository noteClassificationRepository;
 
   Future<void> dispose() => database.close();
 }

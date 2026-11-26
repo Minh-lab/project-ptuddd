@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../../core/di/app_dependencies.dart';
 import '../../../notes/presentation/bloc/notes_cubit.dart';
 import '../../../notes/presentation/pages/notes_page.dart';
+import '../../../subjects/presentation/widgets/open_classification_button.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/logout_button.dart';
@@ -34,7 +35,14 @@ class AuthGate extends StatelessWidget {
             create: (_) => NotesCubit(dependencies.noteRepository)..load(),
             child: NotesPage(
               dependencies: dependencies,
-              actions: const <Widget>[LogoutButton()],
+              actions: <Widget>[
+                OpenClassificationButton(
+                  subjectRepository: dependencies.subjectRepository,
+                  noteClassificationRepository:
+                      dependencies.noteClassificationRepository,
+                ),
+                const LogoutButton(),
+              ],
             ),
           );
         }
