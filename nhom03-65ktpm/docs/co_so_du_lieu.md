@@ -261,7 +261,15 @@ Quy tắc đồng bộ: ghi Supabase trước → cập nhật Drift; khi mất 
 6. Ghi vào **mục 9. Lịch sử thay đổi**.
 7. Báo nhóm trước khi merge; agent **không** tự tạo bảng ngoài file này.
 
-## 9. Lịch sử thay đổi
+## 9. Bổ sung cho #12 và #21
+
+- [SQL quota tóm tắt](sql/20261127_gioi_han_tom_tat.sql) tạo `summary_quota` và
+  RPC `consume_summary_quota`. Chỉ runtime máy chủ được gọi RPC.
+- [SQL đồng bộ phiên bản](sql/20261127_dong_bo_phien_ban_ghi_chu.sql) tạo
+  `note_versions`, RPC `save_note_revision` và đưa `notes` vào publication
+  Realtime. Quyền đọc lịch sử giới hạn theo Firebase UID.
+
+## 10. Lịch sử thay đổi
 
 | Ngày | Nội dung |
 |---|---|
