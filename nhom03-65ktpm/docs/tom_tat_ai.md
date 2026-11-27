@@ -153,7 +153,9 @@ các yêu cầu ra ngoài sau 12,5 giây. Lỗi hết hạn mức ở máy chủ
 
 1. Trên project NoteSmart, chạy [SQL quota](sql/20261127_gioi_han_tom_tat.sql).
 2. Đăng nhập Supabase CLI và đặt `FIREBASE_PROJECT_ID` cùng `GEMINI_API_KEY`
-   trong Edge Function Secrets. `GEMINI_MODEL` là tùy chọn, mặc định
+   trong Edge Function Secrets. Hàm cũng đọc `GEMINI_KEY` nếu chưa đặt
+   `GEMINI_API_KEY`. Nếu dùng tên khác, đặt `GEMINI_SECRET_NAME` thành tên
+   secret chứa khóa (ví dụ `gemini` trên NoteSmart). `GEMINI_MODEL` là tùy chọn, mặc định
    `gemini-3.5-flash-lite`. Supabase cấp `SUPABASE_URL` và
    `SUPABASE_SERVICE_ROLE_KEY` cho runtime máy chủ.
 3. Từ thư mục `nhom03-65ktpm/`, chạy:
