@@ -23,6 +23,7 @@ extension NoteRowMapper on NoteRow {
                 .map((String t) => t.trim())
                 .where((String t) => t.isNotEmpty)
                 .toList(),
+      deletedAt: deletedAt,
     );
   }
 }
@@ -41,6 +42,7 @@ extension NoteEntityMapper on Note {
       kind: Value<String>(kind.name),
       createdAt: Value<DateTime>(createdAt),
       updatedAt: Value<DateTime>(updatedAt),
+      deletedAt: Value<DateTime?>(deletedAt),
     );
   }
 
@@ -53,6 +55,22 @@ extension NoteEntityMapper on Note {
       tags: Value<String>(tagsAsStorage),
       kind: Value<String>(kind.name),
       updatedAt: Value<DateTime>(updatedAt),
+      deletedAt: Value<DateTime?>(deletedAt),
+    );
+  }
+
+  /// Bản ghi đầy đủ để ghi đè khi đồng bộ (kể cả tombstone).
+  NotesCompanion toSyncCompanion() {
+    return NotesCompanion(
+      id: Value<String>(id),
+      title: Value<String>(title),
+      content: Value<String>(content),
+      subjectId: Value<String?>(subjectId),
+      tags: Value<String>(tagsAsStorage),
+      kind: Value<String>(kind.name),
+      createdAt: Value<DateTime>(createdAt),
+      updatedAt: Value<DateTime>(updatedAt),
+      deletedAt: Value<DateTime?>(deletedAt),
     );
   }
 }
