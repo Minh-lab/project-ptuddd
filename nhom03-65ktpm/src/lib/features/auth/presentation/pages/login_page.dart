@@ -1,16 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/form_validators.dart';
+import '../../../../core/widgets/app_error_banner.dart';
+import '../../../../core/widgets/app_password_field.dart';
+import '../../../../core/widgets/app_primary_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/auth_brand_hero.dart';
+import '../../../../core/widgets/auth_scaffold.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 import 'register_page.dart';
 
 /// Màn hình đăng nhập email + mật khẩu.
 ///
-/// Chỉ là giao diện tối thiểu để luồng #2 chạy được; phần trình bày/thiết kế
-/// sẽ được thay khi issue #4 (UI/UX nền tảng) hoàn thành. Không có logic
-/// nghiệp vụ ở đây — mọi thứ đi qua [AuthCubit].
+/// Bố cục tham chiếu `15_brand_visual.png` (khối hero thương hiệu) và
+/// `14_ui_style_guide.png` (tiêu đề lớn, nhãn trên ô, một CTA duy nhất).
+/// Quy ước chi tiết ở `docs/ui_ux.md`. Không có logic nghiệp vụ — mọi thứ đi
+/// qua [AuthCubit].
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
@@ -22,7 +30,6 @@ class _LoginPageState extends State<LoginPage> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -42,116 +49,79 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  void _openRegister() {
+    Navigator.of(context)
+        .push(MaterialPageRoute<void>(builder: (_) => const RegisterPage()));
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: BlocBuilder<AuthCubit, AuthState>(
-                builder: (BuildContext context, AuthState state) {
-                  return Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        Text(
-                          'SmartNote',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.headlineMedium,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Đăng nhập để đồng bộ ghi chú của bạn',
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium,
-                        ),
-                        const SizedBox(height: 32),
-                        TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const <String>[AutofillHints.email],
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: FormValidators.email,
-                          onChanged: (_) =>
-                              context.read<AuthCubit>().clearError(),
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.done,
-                          autofillHints: const <String>[AutofillHints.password],
-                          decoration: InputDecoration(
-                            labelText: 'Mật khẩu',
-                            border: const OutlineInputBorder(),
-                            suffixIcon: IconButton(
-                              onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword,
-                              ),
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                              ),
-                              tooltip: _obscurePassword
-                                  ? 'Hiện mật khẩu'
-                                  : 'Ẩn mật khẩu',
-                            ),
-                          ),
-                          validator: FormValidators.password,
-                          onFieldSubmitted: (_) => _submit(),
-                          onChanged: (_) =>
-                              context.read<AuthCubit>().clearError(),
-                        ),
-                        if (state.errorMessage != null) ...<Widget>[
-                          const SizedBox(height: 16),
-                          Text(
-                            state.errorMessage!,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        FilledButton(
-                          onPressed: state.isSubmitting ? null : _submit,
-                          child: state.isSubmitting
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Đăng nhập'),
-                        ),
-                        const SizedBox(height: 8),
-                        TextButton(
-                          onPressed: state.isSubmitting
-                              ? null
-                              : () => Navigator.of(context).push(
-                                  MaterialPageRoute<void>(
-                                    builder: (_) => const RegisterPage(),
-                                  ),
-                                ),
-                          child: const Text('Chưa có tài khoản? Đăng ký'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return AuthScaffold(
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (BuildContext context, AuthState state) {
+          return Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                const AuthBrandHero(),
+                const SizedBox(height: AppSpacing.xl),
+                Text(
+                  'Ghi chú thông minh\ncho việc học.',
+                  style: theme.textTheme.displaySmall,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                Text(
+                  'Đăng nhập để đồng bộ ghi chú của bạn',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                AppTextField(
+                  label: 'Email',
+                  controller: _emailController,
+                  hintText: 'ban@truong.edu.vn',
+                  prefixIcon: Icons.mail_outline_rounded,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const <String>[AutofillHints.email],
+                  validator: FormValidators.email,
+                  onChanged: (_) => context.read<AuthCubit>().clearError(),
+                ),
+                const SizedBox(height: AppSpacing.lg),
+                AppPasswordField(
+                  label: 'Mật khẩu',
+                  controller: _passwordController,
+                  hintText: 'Tối thiểu 6 ký tự',
+                  textInputAction: TextInputAction.done,
+                  autofillHints: const <String>[AutofillHints.password],
+                  validator: FormValidators.password,
+                  onFieldSubmitted: (_) => _submit(),
+                  onChanged: (_) => context.read<AuthCubit>().clearError(),
+                ),
+                if (state.errorMessage != null) ...<Widget>[
+                  const SizedBox(height: AppSpacing.lg),
+                  AppErrorBanner(message: state.errorMessage!),
+                ],
+                const SizedBox(height: AppSpacing.lg),
+                AppPrimaryButton(
+                  label: 'Đăng nhập',
+                  isLoading: state.isSubmitting,
+                  onPressed: _submit,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextButton(
+                  onPressed: state.isSubmitting ? null : _openRegister,
+                  child: const Text('Chưa có tài khoản? Đăng ký'),
+                ),
+              ],
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

@@ -26,6 +26,12 @@ class NotesDao extends DatabaseAccessor<AppDatabase> with _$NotesDaoMixin {
     return query.get();
   }
 
+  /// Lấy **cả** bản ghi đã xoá mềm — cần cho bước hợp nhất khi đồng bộ (#21),
+  /// vì tombstone phải được so sánh như mọi bản ghi khác.
+  Future<List<NoteRow>> getAllIncludingDeleted() {
+    return select(notes).get();
+  }
+
   Future<NoteRow?> findById(String id) {
     return (select(
       notes,
@@ -33,6 +39,21 @@ class NotesDao extends DatabaseAccessor<AppDatabase> with _$NotesDaoMixin {
   }
 
   Future<void> insertNote(NotesCompanion row) => into(notes).insert(row);
+
+  /// Ghi đè theo khoá chính — dùng khi áp thay đổi từ máy chủ xuống.
+  Future<void> upsertNote(NotesCompanion row) =>
+      into(notes).insertOnConflictUpdate(row);
+
+  /// Ghi nhiều bản ghi trong một transaction.
+  Future<void> upsertAll(Iterable<NotesCompanion> rows) async {
+    final companions = rows.toList();
+    if (companions.isEmpty) {
+      return;
+    }
+    await batch((Batch b) {
+      b.insertAllOnConflictUpdate(notes, companions);
+    });
+  }
 
   Future<bool> updateNote(String id, NotesCompanion row) async {
     final affected = await (update(
@@ -42,13 +63,11 @@ class NotesDao extends DatabaseAccessor<AppDatabase> with _$NotesDaoMixin {
   }
 
   /// Xoá mềm để không mất dữ liệu khi đồng bộ với Supabase.
-  Future<bool> softDeleteNote(String id) {
+  Future<bool> softDeleteNote(String id, {DateTime? at}) {
+    final now = at ?? DateTime.now();
     return updateNote(
       id,
-      NotesCompanion(
-        deletedAt: Value(DateTime.now()),
-        updatedAt: Value(DateTime.now()),
-      ),
+      NotesCompanion(deletedAt: Value(now), updatedAt: Value(now)),
     );
   }
 }
