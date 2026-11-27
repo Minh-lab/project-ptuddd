@@ -11,8 +11,8 @@ part 'app_database.g.dart';
 @DriftDatabase(tables: [Notes, QuizScores])
 class AppDatabase extends _$AppDatabase {
   /// [executor] chỉ dùng cho test (ví dụ `NativeDatabase.memory()`).
-  AppDatabase([QueryExecutor? executor])
-    : super(executor ?? driftDatabase(name: 'smart_note'));
+  AppDatabase([QueryExecutor? executor, String databaseName = 'smart_note'])
+    : super(executor ?? driftDatabase(name: databaseName));
 
   @override
   int get schemaVersion => 2;
