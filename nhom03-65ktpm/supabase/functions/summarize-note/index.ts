@@ -4,7 +4,10 @@ import { createHandler, RequestError } from "./handler.ts";
 const certUrl =
   "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
 const projectId = Deno.env.get("FIREBASE_PROJECT_ID");
-const geminiKey = Deno.env.get("GEMINI_API_KEY");
+const geminiSecretName = Deno.env.get("GEMINI_SECRET_NAME");
+const geminiKey = geminiSecretName
+  ? Deno.env.get(geminiSecretName)
+  : Deno.env.get("GEMINI_API_KEY") || Deno.env.get("GEMINI_KEY");
 const model = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.5-flash-lite";
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const serverKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -112,8 +115,17 @@ async function generate(
       signal,
     },
   );
-  if (response.status === 429) throw new RequestError(429, "quota_exceeded");
-  if (!response.ok) throw new RequestError(502, "gemini_unavailable");
+  if (!response.ok) {
+    const failure = await response.json().catch(() => null) as {
+      error?: { details?: { reason?: string }[] };
+    } | null;
+    const reason = failure?.error?.details?.find((detail) => detail.reason)
+      ?.reason;
+    const googleReason = reason && /^[A-Z_]{1,64}$/.test(reason) ? reason : "unknown";
+    console.warn(`Gemini request failed (${response.status}, ${googleReason})`);
+    if (response.status === 429) throw new RequestError(429, "quota_exceeded");
+    throw new RequestError(502, "gemini_unavailable");
+  }
   const result = await response.json() as {
     candidates?: {
       content?: { parts?: { text?: string; thought?: boolean }[] };
