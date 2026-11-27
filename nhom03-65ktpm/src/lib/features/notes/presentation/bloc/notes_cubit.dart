@@ -1,8 +1,10 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/error/failure.dart';
+import '../../../../core/sync/sync_status.dart';
 import '../../domain/entities/note.dart';
 import '../../domain/repositories/note_repository.dart';
 import 'notes_state.dart';
@@ -11,10 +13,22 @@ import 'notes_state.dart';
 ///
 /// Widget không đọc database trực tiếp: mọi thứ đi qua cubit này.
 class NotesCubit extends Cubit<NotesState> {
-  NotesCubit(this._repository) : super(const NotesState());
+  NotesCubit(this._repository, {SyncMonitor? monitor})
+    : super(NotesState(syncStatus: monitor?.status ?? SyncStatus.disabled)) {
+    _syncSubscription = monitor?.stream.listen((SyncStatus status) {
+      emit(
+        state.copyWith(
+          syncStatus: status,
+          syncMessage: monitor.lastMessage,
+          clearSyncMessage: monitor.lastMessage == null,
+        ),
+      );
+    });
+  }
 
   final NoteRepository _repository;
   StreamSubscription<List<Note>>? _subscription;
+  StreamSubscription<SyncStatus>? _syncSubscription;
 
   /// Bắt đầu theo dõi dữ liệu; gọi một lần khi màn hình được tạo.
   Future<void> load() async {
@@ -48,7 +62,9 @@ class NotesCubit extends Cubit<NotesState> {
   }) async {
     final now = DateTime.now();
     final note = Note(
-      id: '${now.microsecondsSinceEpoch}-${now.hashCode}',
+      // Bảng `notes` trên Supabase dùng khoá `uuid`, nên id sinh ngay trên máy
+      // cũng phải là UUID v4 (#21).
+      id: const Uuid().v4(),
       title: title,
       content: content,
       kind: kind,
@@ -70,6 +86,7 @@ class NotesCubit extends Cubit<NotesState> {
   @override
   Future<void> close() async {
     await _subscription?.cancel();
+    await _syncSubscription?.cancel();
     return super.close();
   }
 }
