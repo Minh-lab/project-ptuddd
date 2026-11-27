@@ -1,14 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/utils/form_validators.dart';
+import '../../../../core/widgets/app_error_banner.dart';
+import '../../../../core/widgets/app_logo.dart';
+import '../../../../core/widgets/app_password_field.dart';
+import '../../../../core/widgets/app_primary_button.dart';
+import '../../../../core/widgets/app_text_field.dart';
+import '../../../../core/widgets/auth_scaffold.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 
 /// Màn hình đăng ký tài khoản bằng email + mật khẩu.
 ///
-/// Giao diện tối thiểu; thiết kế chi tiết thuộc issue #4. Logic nằm ở
-/// [AuthCubit].
+/// Cùng ngôn ngữ thiết kế với màn đăng nhập (tham chiếu Duolingo): tiêu đề lớn,
+/// nhãn trên ô nhập, một CTA chính, cùng khung [AuthScaffold]. Quy ước ở
+/// `docs/ui_ux.md`.
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -21,7 +29,6 @@ class _RegisterPageState extends State<RegisterPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
-  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -48,113 +55,94 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Đăng ký')),
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: BlocBuilder<AuthCubit, AuthState>(
-                builder: (BuildContext context, AuthState state) {
-                  return Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: <Widget>[
-                        TextFormField(
-                          controller: _emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const <String>[AutofillHints.email],
-                          decoration: const InputDecoration(
-                            labelText: 'Email',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: FormValidators.email,
-                          onChanged: (_) =>
-                              context.read<AuthCubit>().clearError(),
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _passwordController,
-                          obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.next,
-                          autofillHints: const <String>[
-                            AutofillHints.newPassword,
-                          ],
-                          decoration: InputDecoration(
-                            labelText: 'Mật khẩu',
-                            helperText:
-                                'Ít nhất ${FormValidators.minPasswordLength} ký tự',
-                            border: const OutlineInputBorder(),
-                            suffixIcon: IconButton(
-                              onPressed: () => setState(
-                                () => _obscurePassword = !_obscurePassword,
-                              ),
-                              icon: Icon(
-                                _obscurePassword
-                                    ? Icons.visibility_off
-                                    : Icons.visibility,
-                              ),
-                              tooltip: _obscurePassword
-                                  ? 'Hiện mật khẩu'
-                                  : 'Ẩn mật khẩu',
-                            ),
-                          ),
-                          validator: FormValidators.password,
-                          onChanged: (_) =>
-                              context.read<AuthCubit>().clearError(),
-                        ),
-                        const SizedBox(height: 16),
-                        TextFormField(
-                          controller: _confirmController,
-                          obscureText: _obscurePassword,
-                          textInputAction: TextInputAction.done,
-                          decoration: const InputDecoration(
-                            labelText: 'Nhập lại mật khẩu',
-                            border: OutlineInputBorder(),
-                          ),
-                          validator: (String? value) =>
-                              FormValidators.confirmPassword(
-                                value,
-                                _passwordController.text,
-                              ),
-                          onFieldSubmitted: (_) => _submit(),
-                          onChanged: (_) =>
-                              context.read<AuthCubit>().clearError(),
-                        ),
-                        if (state.errorMessage != null) ...<Widget>[
-                          const SizedBox(height: 16),
-                          Text(
-                            state.errorMessage!,
-                            style: TextStyle(
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 24),
-                        FilledButton(
-                          onPressed: state.isSubmitting ? null : _submit,
-                          child: state.isSubmitting
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Text('Tạo tài khoản'),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+
+    return AuthScaffold(
+      showBackButton: true,
+      child: BlocBuilder<AuthCubit, AuthState>(
+        builder: (BuildContext context, AuthState state) {
+          return Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Row(
+                  children: <Widget>[
+                    const AppLogo(size: 44),
+                    const SizedBox(width: AppSpacing.md),
+                    Text('SmartNote', style: theme.textTheme.titleLarge),
+                  ],
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                Text('Tạo tài khoản', style: theme.textTheme.displaySmall),
+                const SizedBox(height: AppSpacing.md),
+                Text(
+                  'Bắt đầu ghi chú cùng SmartNote',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: AppSpacing.xxl),
+                AppTextField(
+                  label: 'Email',
+                  controller: _emailController,
+                  hintText: 'ban@truong.edu.vn',
+                  prefixIcon: Icons.mail_outline_rounded,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const <String>[AutofillHints.email],
+                  validator: FormValidators.email,
+                  onChanged: (_) => context.read<AuthCubit>().clearError(),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                AppPasswordField(
+                  label: 'Mật khẩu',
+                  controller: _passwordController,
+                  hintText:
+                      'Tối thiểu '
+                      '${FormValidators.minPasswordLength} ký tự',
+                  textInputAction: TextInputAction.next,
+                  autofillHints: const <String>[AutofillHints.newPassword],
+                  validator: FormValidators.password,
+                  onChanged: (_) => context.read<AuthCubit>().clearError(),
+                ),
+                const SizedBox(height: AppSpacing.xl),
+                AppTextField(
+                  label: 'Nhập lại mật khẩu',
+                  controller: _confirmController,
+                  hintText: 'Nhập lại mật khẩu ở trên',
+                  prefixIcon: Icons.lock_reset_rounded,
+                  obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  validator: (String? value) => FormValidators.confirmPassword(
+                    value,
+                    _passwordController.text,
+                  ),
+                  onFieldSubmitted: (_) => _submit(),
+                  onChanged: (_) => context.read<AuthCubit>().clearError(),
+                ),
+                if (state.errorMessage != null) ...<Widget>[
+                  const SizedBox(height: AppSpacing.lg),
+                  AppErrorBanner(message: state.errorMessage!),
+                ],
+                const SizedBox(height: AppSpacing.xl),
+                AppPrimaryButton(
+                  label: 'Tạo tài khoản',
+                  isLoading: state.isSubmitting,
+                  onPressed: _submit,
+                ),
+                const SizedBox(height: AppSpacing.sm),
+                TextButton(
+                  onPressed: state.isSubmitting
+                      ? null
+                      : () => Navigator.of(context).pop(),
+                  child: const Text('Đã có tài khoản? Đăng nhập'),
+                ),
+              ],
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
