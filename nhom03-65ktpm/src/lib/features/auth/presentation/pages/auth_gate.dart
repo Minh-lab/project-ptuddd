@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/app_dependencies.dart';
+import '../../../../core/navigation/app_shell.dart';
+import '../../../../core/theme/app_spacing.dart';
+import '../../../../core/widgets/app_loading_indicator.dart';
+import '../../../../core/widgets/app_logo.dart';
 import '../../../notes/presentation/bloc/notes_cubit.dart';
-import '../../../notes/presentation/pages/notes_page.dart';
 import '../../../subjects/presentation/widgets/open_classification_button.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
@@ -32,10 +35,14 @@ class AuthGate extends StatelessWidget {
         }
         if (state.isAuthenticated) {
           return BlocProvider<NotesCubit>(
-            create: (_) => NotesCubit(dependencies.noteRepository)..load(),
-            child: NotesPage(
-              dependencies: dependencies,
-              actions: <Widget>[
+            key: ValueKey(state.user?.id),
+            create: (_) => NotesCubit(
+              dependencies.noteRepository,
+              monitor: dependencies.syncMonitor,
+            )..load(),
+            child: AppShell(
+              notesDependencies: dependencies,
+              notesActions: <Widget>[
                 OpenClassificationButton(
                   subjectRepository: dependencies.subjectRepository,
                   noteClassificationRepository:
@@ -57,15 +64,35 @@ class _SplashPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('SmartNote'),
-          ],
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    return Scaffold(
+      body: DecoratedBox(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: <Color>[scheme.primaryContainer, scheme.surface],
+          ),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const AppLogo(size: 64),
+              const SizedBox(height: AppSpacing.lg),
+              Text('SmartNote', style: theme.textTheme.titleLarge),
+              const SizedBox(height: AppSpacing.xs),
+              Text(
+                'Học tốt hơn mỗi ngày',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: scheme.onSurfaceVariant,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.xl),
+              AppLoadingIndicator(size: 24, color: scheme.primary),
+            ],
+          ),
         ),
       ),
     );
