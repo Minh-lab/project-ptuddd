@@ -43,7 +43,7 @@ final class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message);
 }
 
-/// Nhóm lỗi khi gọi máy chủ tóm tắt AI (#12).
+/// Nhóm lỗi khi gọi máy chủ tóm tắt hoặc trắc nghiệm AI (#12, #13).
 ///
 /// Tách khỏi [message] để UI quyết định hiển thị nút "Thử lại" hay hướng dẫn
 /// cấu hình, thay vì phải so khớp chuỗi tiếng Việt.

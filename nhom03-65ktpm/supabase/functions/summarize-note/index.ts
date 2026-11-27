@@ -110,7 +110,7 @@ async function generate(
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: instruction }] },
         contents: [{ role: "user", parts: [{ text: note }] }],
-        generationConfig: { maxOutputTokens: 800 },
+        generationConfig: { maxOutputTokens: 3000 },
       }),
       signal,
     },
@@ -121,7 +121,9 @@ async function generate(
     } | null;
     const reason = failure?.error?.details?.find((detail) => detail.reason)
       ?.reason;
-    const googleReason = reason && /^[A-Z_]{1,64}$/.test(reason) ? reason : "unknown";
+    const googleReason = reason && /^[A-Z_]{1,64}$/.test(reason)
+      ? reason
+      : "unknown";
     console.warn(`Gemini request failed (${response.status}, ${googleReason})`);
     if (response.status === 429) throw new RequestError(429, "quota_exceeded");
     throw new RequestError(502, "gemini_unavailable");
