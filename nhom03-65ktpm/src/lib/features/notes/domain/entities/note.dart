@@ -21,6 +21,7 @@ class Note extends Equatable {
     required this.updatedAt,
     this.subjectId,
     this.tags = const <String>[],
+    this.deletedAt,
   });
 
   final String id;
@@ -31,6 +32,11 @@ class Note extends Equatable {
   final DateTime updatedAt;
   final String? subjectId;
   final List<String> tags;
+
+  /// Xoá mềm (tombstone). Khác `null` nghĩa là ghi chú đã bị xoá nhưng vẫn
+  /// cần giữ lại để đồng bộ: thiết bị khác nhận tombstone sẽ xoá theo thay vì
+  /// "hồi sinh" ghi chú (#21).
+  final DateTime? deletedAt;
 
   bool get isDiary => kind == NoteKind.diary;
 
@@ -44,6 +50,7 @@ class Note extends Equatable {
     DateTime? updatedAt,
     String? subjectId,
     List<String>? tags,
+    DateTime? deletedAt,
   }) {
     return Note(
       id: id,
@@ -54,6 +61,7 @@ class Note extends Equatable {
       updatedAt: updatedAt ?? this.updatedAt,
       subjectId: subjectId ?? this.subjectId,
       tags: tags ?? this.tags,
+      deletedAt: deletedAt ?? this.deletedAt,
     );
   }
 
@@ -67,5 +75,6 @@ class Note extends Equatable {
     updatedAt,
     subjectId,
     tags,
+    deletedAt,
   ];
 }

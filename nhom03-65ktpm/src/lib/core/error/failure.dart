@@ -42,3 +42,44 @@ final class AuthFailure extends Failure {
 final class UnexpectedFailure extends Failure {
   const UnexpectedFailure(super.message);
 }
+
+/// Nhóm lỗi khi gọi máy chủ tóm tắt AI (#12).
+///
+/// Tách khỏi [message] để UI quyết định hiển thị nút "Thử lại" hay hướng dẫn
+/// cấu hình, thay vì phải so khớp chuỗi tiếng Việt.
+enum AiFailureKind {
+  /// Chưa truyền `--dart-define=AI_SUMMARY_ENDPOINT`.
+  notConfigured,
+
+  /// Không kết nối được máy chủ (mất mạng, DNS, TLS).
+  network,
+
+  /// Máy chủ không phản hồi trong thời gian cho phép.
+  timeout,
+
+  /// Hết lượt gọi API (HTTP 429).
+  quotaExceeded,
+
+  /// Token đăng nhập thiếu hoặc hết hạn (HTTP 401/403).
+  unauthorized,
+
+  /// Máy chủ lỗi (HTTP 5xx).
+  server,
+
+  /// Phản hồi không đúng định dạng hoặc rỗng.
+  badResponse,
+
+  /// Ghi chú không có nội dung để tóm tắt.
+  emptyContent,
+}
+
+/// Lỗi tóm tắt AI đã dịch sang tiếng Việt để hiển thị thẳng lên UI.
+final class AiFailure extends Failure {
+  const AiFailure(super.message, {required this.kind});
+
+  final AiFailureKind kind;
+
+  /// Mất mạng hoặc quá thời gian chờ — UI nên gợi ý kiểm tra kết nối.
+  bool get isNetworkError =>
+      kind == AiFailureKind.network || kind == AiFailureKind.timeout;
+}
