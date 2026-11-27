@@ -2,18 +2,24 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../../../summary/domain/repositories/summary_repository.dart';
+import '../../../summary/presentation/pages/summary_page.dart';
 import '../../domain/entities/note.dart';
 import '../bloc/notes_cubit.dart';
 
 class NoteEditorPage extends StatefulWidget {
   const NoteEditorPage({
     required this.cubit,
+    required this.summaryRepository,
+    this.isSummaryDemo = false,
     this.note,
     this.initialKind = NoteKind.note,
     super.key,
   });
 
   final NotesCubit cubit;
+  final SummaryRepository summaryRepository;
+  final bool isSummaryDemo;
   final Note? note;
   final NoteKind initialKind;
 
@@ -88,6 +94,37 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
     }
   }
 
+  /// Lưu nội dung đang gõ rồi mở màn tóm tắt AI (#12).
+  ///
+  /// Ghi chú mới chưa có trong database sẽ được tạo trước, nhờ vậy bản tóm tắt
+  /// luôn gắn với một `noteId` thật.
+  Future<void> _openSummary() async {
+    if (_contentController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Viết nội dung trước khi tóm tắt.')),
+      );
+      return;
+    }
+    _saveTimer?.cancel();
+    if (_note?.title != _titleController.text ||
+        _note?.content != _contentController.text) {
+      await _save();
+    }
+    final note = _note;
+    if (!mounted || note == null) {
+      return;
+    }
+    await Navigator.of(context).push(
+      SummaryPage.route(
+        noteId: note.id,
+        noteTitle: note.displayTitle,
+        noteContent: _contentController.text,
+        repository: widget.summaryRepository,
+        isDemo: widget.isSummaryDemo,
+      ),
+    );
+  }
+
   Future<void> _delete() async {
     if (_note == null) {
       Navigator.pop(context);
@@ -127,6 +164,11 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
             style: Theme.of(context).textTheme.labelMedium,
           ),
           const SizedBox(width: 8),
+          IconButton(
+            tooltip: 'Tóm tắt AI',
+            icon: const Icon(Icons.auto_awesome_outlined),
+            onPressed: _openSummary,
+          ),
           IconButton(
             tooltip: 'Xoá',
             icon: const Icon(Icons.delete_outline),
