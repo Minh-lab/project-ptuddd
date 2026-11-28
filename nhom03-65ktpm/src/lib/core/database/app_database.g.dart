@@ -975,16 +975,498 @@ class QuizScoresCompanion extends UpdateCompanion<QuizScoreRow> {
   }
 }
 
+class $NoteAttachmentsTable extends NoteAttachments
+    with TableInfo<$NoteAttachmentsTable, NoteAttachmentRow> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $NoteAttachmentsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _noteIdMeta = const VerificationMeta('noteId');
+  @override
+  late final GeneratedColumn<String> noteId = GeneratedColumn<String>(
+    'note_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _storagePathMeta = const VerificationMeta(
+    'storagePath',
+  );
+  @override
+  late final GeneratedColumn<String> storagePath = GeneratedColumn<String>(
+    'storage_path',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _croppedPathMeta = const VerificationMeta(
+    'croppedPath',
+  );
+  @override
+  late final GeneratedColumn<String> croppedPath = GeneratedColumn<String>(
+    'cropped_path',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _pageOrderMeta = const VerificationMeta(
+    'pageOrder',
+  );
+  @override
+  late final GeneratedColumn<int> pageOrder = GeneratedColumn<int>(
+    'page_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _ocrTextMeta = const VerificationMeta(
+    'ocrText',
+  );
+  @override
+  late final GeneratedColumn<String> ocrText = GeneratedColumn<String>(
+    'ocr_text',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _createdAtMeta = const VerificationMeta(
+    'createdAt',
+  );
+  @override
+  late final GeneratedColumn<DateTime> createdAt = GeneratedColumn<DateTime>(
+    'created_at',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+    defaultValue: currentDateAndTime,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    noteId,
+    storagePath,
+    croppedPath,
+    pageOrder,
+    ocrText,
+    createdAt,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'note_attachments';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<NoteAttachmentRow> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('note_id')) {
+      context.handle(
+        _noteIdMeta,
+        noteId.isAcceptableOrUnknown(data['note_id']!, _noteIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_noteIdMeta);
+    }
+    if (data.containsKey('storage_path')) {
+      context.handle(
+        _storagePathMeta,
+        storagePath.isAcceptableOrUnknown(
+          data['storage_path']!,
+          _storagePathMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_storagePathMeta);
+    }
+    if (data.containsKey('cropped_path')) {
+      context.handle(
+        _croppedPathMeta,
+        croppedPath.isAcceptableOrUnknown(
+          data['cropped_path']!,
+          _croppedPathMeta,
+        ),
+      );
+    }
+    if (data.containsKey('page_order')) {
+      context.handle(
+        _pageOrderMeta,
+        pageOrder.isAcceptableOrUnknown(data['page_order']!, _pageOrderMeta),
+      );
+    }
+    if (data.containsKey('ocr_text')) {
+      context.handle(
+        _ocrTextMeta,
+        ocrText.isAcceptableOrUnknown(data['ocr_text']!, _ocrTextMeta),
+      );
+    }
+    if (data.containsKey('created_at')) {
+      context.handle(
+        _createdAtMeta,
+        createdAt.isAcceptableOrUnknown(data['created_at']!, _createdAtMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  NoteAttachmentRow map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return NoteAttachmentRow(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      noteId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}note_id'],
+      )!,
+      storagePath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}storage_path'],
+      )!,
+      croppedPath: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}cropped_path'],
+      ),
+      pageOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}page_order'],
+      )!,
+      ocrText: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}ocr_text'],
+      ),
+      createdAt: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}created_at'],
+      )!,
+    );
+  }
+
+  @override
+  $NoteAttachmentsTable createAlias(String alias) {
+    return $NoteAttachmentsTable(attachedDatabase, alias);
+  }
+}
+
+class NoteAttachmentRow extends DataClass
+    implements Insertable<NoteAttachmentRow> {
+  final String id;
+  final String noteId;
+
+  /// Đường dẫn tệp ảnh gốc trên thiết bị hoặc đường dẫn Storage.
+  final String storagePath;
+
+  /// Đường dẫn tệp ảnh đã cắt (nếu có).
+  final String? croppedPath;
+  final int pageOrder;
+  final String? ocrText;
+  final DateTime createdAt;
+  const NoteAttachmentRow({
+    required this.id,
+    required this.noteId,
+    required this.storagePath,
+    this.croppedPath,
+    required this.pageOrder,
+    this.ocrText,
+    required this.createdAt,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['note_id'] = Variable<String>(noteId);
+    map['storage_path'] = Variable<String>(storagePath);
+    if (!nullToAbsent || croppedPath != null) {
+      map['cropped_path'] = Variable<String>(croppedPath);
+    }
+    map['page_order'] = Variable<int>(pageOrder);
+    if (!nullToAbsent || ocrText != null) {
+      map['ocr_text'] = Variable<String>(ocrText);
+    }
+    map['created_at'] = Variable<DateTime>(createdAt);
+    return map;
+  }
+
+  NoteAttachmentsCompanion toCompanion(bool nullToAbsent) {
+    return NoteAttachmentsCompanion(
+      id: Value(id),
+      noteId: Value(noteId),
+      storagePath: Value(storagePath),
+      croppedPath: croppedPath == null && nullToAbsent
+          ? const Value.absent()
+          : Value(croppedPath),
+      pageOrder: Value(pageOrder),
+      ocrText: ocrText == null && nullToAbsent
+          ? const Value.absent()
+          : Value(ocrText),
+      createdAt: Value(createdAt),
+    );
+  }
+
+  factory NoteAttachmentRow.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return NoteAttachmentRow(
+      id: serializer.fromJson<String>(json['id']),
+      noteId: serializer.fromJson<String>(json['noteId']),
+      storagePath: serializer.fromJson<String>(json['storagePath']),
+      croppedPath: serializer.fromJson<String?>(json['croppedPath']),
+      pageOrder: serializer.fromJson<int>(json['pageOrder']),
+      ocrText: serializer.fromJson<String?>(json['ocrText']),
+      createdAt: serializer.fromJson<DateTime>(json['createdAt']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'noteId': serializer.toJson<String>(noteId),
+      'storagePath': serializer.toJson<String>(storagePath),
+      'croppedPath': serializer.toJson<String?>(croppedPath),
+      'pageOrder': serializer.toJson<int>(pageOrder),
+      'ocrText': serializer.toJson<String?>(ocrText),
+      'createdAt': serializer.toJson<DateTime>(createdAt),
+    };
+  }
+
+  NoteAttachmentRow copyWith({
+    String? id,
+    String? noteId,
+    String? storagePath,
+    Value<String?> croppedPath = const Value.absent(),
+    int? pageOrder,
+    Value<String?> ocrText = const Value.absent(),
+    DateTime? createdAt,
+  }) => NoteAttachmentRow(
+    id: id ?? this.id,
+    noteId: noteId ?? this.noteId,
+    storagePath: storagePath ?? this.storagePath,
+    croppedPath: croppedPath.present ? croppedPath.value : this.croppedPath,
+    pageOrder: pageOrder ?? this.pageOrder,
+    ocrText: ocrText.present ? ocrText.value : this.ocrText,
+    createdAt: createdAt ?? this.createdAt,
+  );
+  NoteAttachmentRow copyWithCompanion(NoteAttachmentsCompanion data) {
+    return NoteAttachmentRow(
+      id: data.id.present ? data.id.value : this.id,
+      noteId: data.noteId.present ? data.noteId.value : this.noteId,
+      storagePath: data.storagePath.present
+          ? data.storagePath.value
+          : this.storagePath,
+      croppedPath: data.croppedPath.present
+          ? data.croppedPath.value
+          : this.croppedPath,
+      pageOrder: data.pageOrder.present ? data.pageOrder.value : this.pageOrder,
+      ocrText: data.ocrText.present ? data.ocrText.value : this.ocrText,
+      createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NoteAttachmentRow(')
+          ..write('id: $id, ')
+          ..write('noteId: $noteId, ')
+          ..write('storagePath: $storagePath, ')
+          ..write('croppedPath: $croppedPath, ')
+          ..write('pageOrder: $pageOrder, ')
+          ..write('ocrText: $ocrText, ')
+          ..write('createdAt: $createdAt')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    noteId,
+    storagePath,
+    croppedPath,
+    pageOrder,
+    ocrText,
+    createdAt,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is NoteAttachmentRow &&
+          other.id == this.id &&
+          other.noteId == this.noteId &&
+          other.storagePath == this.storagePath &&
+          other.croppedPath == this.croppedPath &&
+          other.pageOrder == this.pageOrder &&
+          other.ocrText == this.ocrText &&
+          other.createdAt == this.createdAt);
+}
+
+class NoteAttachmentsCompanion extends UpdateCompanion<NoteAttachmentRow> {
+  final Value<String> id;
+  final Value<String> noteId;
+  final Value<String> storagePath;
+  final Value<String?> croppedPath;
+  final Value<int> pageOrder;
+  final Value<String?> ocrText;
+  final Value<DateTime> createdAt;
+  final Value<int> rowid;
+  const NoteAttachmentsCompanion({
+    this.id = const Value.absent(),
+    this.noteId = const Value.absent(),
+    this.storagePath = const Value.absent(),
+    this.croppedPath = const Value.absent(),
+    this.pageOrder = const Value.absent(),
+    this.ocrText = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  NoteAttachmentsCompanion.insert({
+    required String id,
+    required String noteId,
+    required String storagePath,
+    this.croppedPath = const Value.absent(),
+    this.pageOrder = const Value.absent(),
+    this.ocrText = const Value.absent(),
+    this.createdAt = const Value.absent(),
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       noteId = Value(noteId),
+       storagePath = Value(storagePath);
+  static Insertable<NoteAttachmentRow> custom({
+    Expression<String>? id,
+    Expression<String>? noteId,
+    Expression<String>? storagePath,
+    Expression<String>? croppedPath,
+    Expression<int>? pageOrder,
+    Expression<String>? ocrText,
+    Expression<DateTime>? createdAt,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (noteId != null) 'note_id': noteId,
+      if (storagePath != null) 'storage_path': storagePath,
+      if (croppedPath != null) 'cropped_path': croppedPath,
+      if (pageOrder != null) 'page_order': pageOrder,
+      if (ocrText != null) 'ocr_text': ocrText,
+      if (createdAt != null) 'created_at': createdAt,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  NoteAttachmentsCompanion copyWith({
+    Value<String>? id,
+    Value<String>? noteId,
+    Value<String>? storagePath,
+    Value<String?>? croppedPath,
+    Value<int>? pageOrder,
+    Value<String?>? ocrText,
+    Value<DateTime>? createdAt,
+    Value<int>? rowid,
+  }) {
+    return NoteAttachmentsCompanion(
+      id: id ?? this.id,
+      noteId: noteId ?? this.noteId,
+      storagePath: storagePath ?? this.storagePath,
+      croppedPath: croppedPath ?? this.croppedPath,
+      pageOrder: pageOrder ?? this.pageOrder,
+      ocrText: ocrText ?? this.ocrText,
+      createdAt: createdAt ?? this.createdAt,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (noteId.present) {
+      map['note_id'] = Variable<String>(noteId.value);
+    }
+    if (storagePath.present) {
+      map['storage_path'] = Variable<String>(storagePath.value);
+    }
+    if (croppedPath.present) {
+      map['cropped_path'] = Variable<String>(croppedPath.value);
+    }
+    if (pageOrder.present) {
+      map['page_order'] = Variable<int>(pageOrder.value);
+    }
+    if (ocrText.present) {
+      map['ocr_text'] = Variable<String>(ocrText.value);
+    }
+    if (createdAt.present) {
+      map['created_at'] = Variable<DateTime>(createdAt.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NoteAttachmentsCompanion(')
+          ..write('id: $id, ')
+          ..write('noteId: $noteId, ')
+          ..write('storagePath: $storagePath, ')
+          ..write('croppedPath: $croppedPath, ')
+          ..write('pageOrder: $pageOrder, ')
+          ..write('ocrText: $ocrText, ')
+          ..write('createdAt: $createdAt, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
   late final $NotesTable notes = $NotesTable(this);
   late final $QuizScoresTable quizScores = $QuizScoresTable(this);
+  late final $NoteAttachmentsTable noteAttachments = $NoteAttachmentsTable(
+    this,
+  );
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
   @override
-  List<DatabaseSchemaEntity> get allSchemaEntities => [notes, quizScores];
+  List<DatabaseSchemaEntity> get allSchemaEntities => [
+    notes,
+    quizScores,
+    noteAttachments,
+  ];
 }
 
 typedef $$NotesTableCreateCompanionBuilder = NotesCompanion Function({
@@ -1495,6 +1977,263 @@ typedef $$QuizScoresTableProcessedTableManager =
       QuizScoreRow,
       PrefetchHooks Function()
     >;
+typedef $$NoteAttachmentsTableCreateCompanionBuilder =
+    NoteAttachmentsCompanion Function({
+      required String id,
+      required String noteId,
+      required String storagePath,
+      Value<String?> croppedPath,
+      Value<int> pageOrder,
+      Value<String?> ocrText,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+typedef $$NoteAttachmentsTableUpdateCompanionBuilder =
+    NoteAttachmentsCompanion Function({
+      Value<String> id,
+      Value<String> noteId,
+      Value<String> storagePath,
+      Value<String?> croppedPath,
+      Value<int> pageOrder,
+      Value<String?> ocrText,
+      Value<DateTime> createdAt,
+      Value<int> rowid,
+    });
+
+class $$NoteAttachmentsTableFilterComposer
+    extends Composer<_$AppDatabase, $NoteAttachmentsTable> {
+  $$NoteAttachmentsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get noteId => $composableBuilder(
+    column: $table.noteId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get storagePath => $composableBuilder(
+    column: $table.storagePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get croppedPath => $composableBuilder(
+    column: $table.croppedPath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get pageOrder => $composableBuilder(
+    column: $table.pageOrder,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get ocrText => $composableBuilder(
+    column: $table.ocrText,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$NoteAttachmentsTableOrderingComposer
+    extends Composer<_$AppDatabase, $NoteAttachmentsTable> {
+  $$NoteAttachmentsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get noteId => $composableBuilder(
+    column: $table.noteId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get storagePath => $composableBuilder(
+    column: $table.storagePath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get croppedPath => $composableBuilder(
+    column: $table.croppedPath,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get pageOrder => $composableBuilder(
+    column: $table.pageOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get ocrText => $composableBuilder(
+    column: $table.ocrText,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get createdAt => $composableBuilder(
+    column: $table.createdAt,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$NoteAttachmentsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $NoteAttachmentsTable> {
+  $$NoteAttachmentsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get noteId =>
+      $composableBuilder(column: $table.noteId, builder: (column) => column);
+
+  GeneratedColumn<String> get storagePath => $composableBuilder(
+    column: $table.storagePath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get croppedPath => $composableBuilder(
+    column: $table.croppedPath,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get pageOrder =>
+      $composableBuilder(column: $table.pageOrder, builder: (column) => column);
+
+  GeneratedColumn<String> get ocrText =>
+      $composableBuilder(column: $table.ocrText, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get createdAt =>
+      $composableBuilder(column: $table.createdAt, builder: (column) => column);
+}
+
+class $$NoteAttachmentsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $NoteAttachmentsTable,
+          NoteAttachmentRow,
+          $$NoteAttachmentsTableFilterComposer,
+          $$NoteAttachmentsTableOrderingComposer,
+          $$NoteAttachmentsTableAnnotationComposer,
+          $$NoteAttachmentsTableCreateCompanionBuilder,
+          $$NoteAttachmentsTableUpdateCompanionBuilder,
+          (
+            NoteAttachmentRow,
+            BaseReferences<
+              _$AppDatabase,
+              $NoteAttachmentsTable,
+              NoteAttachmentRow
+            >,
+          ),
+          NoteAttachmentRow,
+          PrefetchHooks Function()
+        > {
+  $$NoteAttachmentsTableTableManager(
+    _$AppDatabase db,
+    $NoteAttachmentsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$NoteAttachmentsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$NoteAttachmentsTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$NoteAttachmentsTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<String> noteId = const Value.absent(),
+                Value<String> storagePath = const Value.absent(),
+                Value<String?> croppedPath = const Value.absent(),
+                Value<int> pageOrder = const Value.absent(),
+                Value<String?> ocrText = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => NoteAttachmentsCompanion(
+                id: id,
+                noteId: noteId,
+                storagePath: storagePath,
+                croppedPath: croppedPath,
+                pageOrder: pageOrder,
+                ocrText: ocrText,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required String noteId,
+                required String storagePath,
+                Value<String?> croppedPath = const Value.absent(),
+                Value<int> pageOrder = const Value.absent(),
+                Value<String?> ocrText = const Value.absent(),
+                Value<DateTime> createdAt = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => NoteAttachmentsCompanion.insert(
+                id: id,
+                noteId: noteId,
+                storagePath: storagePath,
+                croppedPath: croppedPath,
+                pageOrder: pageOrder,
+                ocrText: ocrText,
+                createdAt: createdAt,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$NoteAttachmentsTable, NoteAttachmentRow>(table),
+                  BaseReferences<
+                    _$AppDatabase,
+                    $NoteAttachmentsTable,
+                    NoteAttachmentRow
+                  >(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$NoteAttachmentsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $NoteAttachmentsTable,
+      NoteAttachmentRow,
+      $$NoteAttachmentsTableFilterComposer,
+      $$NoteAttachmentsTableOrderingComposer,
+      $$NoteAttachmentsTableAnnotationComposer,
+      $$NoteAttachmentsTableCreateCompanionBuilder,
+      $$NoteAttachmentsTableUpdateCompanionBuilder,
+      (
+        NoteAttachmentRow,
+        BaseReferences<_$AppDatabase, $NoteAttachmentsTable, NoteAttachmentRow>,
+      ),
+      NoteAttachmentRow,
+      PrefetchHooks Function()
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -1503,4 +2242,6 @@ class $AppDatabaseManager {
       $$NotesTableTableManager(_db, _db.notes);
   $$QuizScoresTableTableManager get quizScores =>
       $$QuizScoresTableTableManager(_db, _db.quizScores);
+  $$NoteAttachmentsTableTableManager get noteAttachments =>
+      $$NoteAttachmentsTableTableManager(_db, _db.noteAttachments);
 }

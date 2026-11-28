@@ -43,3 +43,26 @@ class QuizScores extends Table {
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
+
+/// Bảng đính kèm ảnh quét vở và văn bản OCR gắn với từng ghi chú.
+@DataClassName('NoteAttachmentRow')
+class NoteAttachments extends Table {
+  TextColumn get id => text()();
+
+  TextColumn get noteId => text()();
+
+  /// Đường dẫn tệp ảnh gốc trên thiết bị hoặc đường dẫn Storage.
+  TextColumn get storagePath => text()();
+
+  /// Đường dẫn tệp ảnh đã cắt (nếu có).
+  TextColumn get croppedPath => text().nullable()();
+
+  IntColumn get pageOrder => integer().withDefault(const Constant(0))();
+
+  TextColumn get ocrText => text().nullable()();
+
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}

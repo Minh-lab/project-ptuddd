@@ -8,14 +8,14 @@ part 'app_database.g.dart';
 /// Cơ sở dữ liệu cục bộ (SQLite qua Drift) — cache offline của ứng dụng.
 ///
 /// Nguồn dữ liệu chính là Supabase; Drift giữ bản sao để dùng khi mất mạng.
-@DriftDatabase(tables: [Notes, QuizScores])
+@DriftDatabase(tables: [Notes, QuizScores, NoteAttachments])
 class AppDatabase extends _$AppDatabase {
   /// [executor] chỉ dùng cho test (ví dụ `NativeDatabase.memory()`).
   AppDatabase([QueryExecutor? executor])
     : super(executor ?? driftDatabase(name: 'smart_note'));
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -25,6 +25,9 @@ class AppDatabase extends _$AppDatabase {
     onUpgrade: (Migrator m, int from, int to) async {
       if (from < 2) {
         await m.createTable(quizScores);
+      }
+      if (from < 3) {
+        await m.createTable(noteAttachments);
       }
     },
     beforeOpen: (OpeningDetails details) async {
