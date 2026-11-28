@@ -1,7 +1,9 @@
+import 'package:drift/drift.dart' show Value;
 import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smart_note/core/database/app_database.dart';
 import 'package:smart_note/core/di/app_dependencies.dart';
 import 'package:smart_note/core/theme/app_theme.dart';
 import 'package:smart_note/features/notes/domain/entities/note.dart';
@@ -44,6 +46,16 @@ void main() {
         tags: const <String>['Nhật ký'],
       ),
     );
+    await dependencies.quizScoresDao.insertScore(
+      QuizScoresCompanion.insert(
+        id: 'score-1',
+        noteId: 'note-1',
+        noteTitle: const Value('Giải tích – Chương 3'),
+        correctAnswers: 1,
+        totalQuestions: 1,
+        completedAt: Value(now),
+      ),
+    );
   });
 
   tearDown(() async {
@@ -77,10 +89,12 @@ void main() {
     expect(find.text('Ghi chú'), findsWidgets);
     expect(find.text('2 ghi chú'), findsOneWidget);
     expect(find.text('Theo chủ đề'), findsOneWidget);
+    expect(find.widgetWithText(ChoiceChip, 'Tất cả'), findsOneWidget);
+    await tester.tap(find.byTooltip('Bộ lọc và công cụ'));
+    await tester.pumpAndSettle();
     expect(find.widgetWithText(ChoiceChip, 'Tất cả'), findsNothing);
     await tester.tap(find.byTooltip('Bộ lọc và công cụ'));
     await tester.pumpAndSettle();
-    expect(find.widgetWithText(ChoiceChip, 'Tất cả'), findsOneWidget);
     expect(find.widgetWithText(ChoiceChip, 'Toán'), findsOneWidget);
     expect(find.byType(NoteCard), findsNWidgets(2));
     expect(find.text('Giải tích – Chương 3'), findsOneWidget);
@@ -93,8 +107,6 @@ void main() {
   ) async {
     await pumpPage(tester);
 
-    await tester.tap(find.byTooltip('Bộ lọc và công cụ'));
-    await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(ChoiceChip, 'Toán'));
     await tester.pumpAndSettle();
 
@@ -124,6 +136,21 @@ void main() {
       tester.getSize(cards.last).height,
     );
     expect(tester.takeException(), isNull);
+    await disposePage(tester);
+  });
+
+  testWidgets('Ôn tập từ ghi chú và lật thẻ để xem nội dung', (tester) async {
+    await pumpPage(tester);
+    expect(find.text('AI Quiz'), findsOneWidget);
+    await tester.tap(find.text('Ôn tập /\nFlashcard'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Giải tích – Chương 3').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Giải tích – Chương 3'), findsOneWidget);
+    expect(find.text('Đạo hàm và tích phân.'), findsNothing);
+    await tester.tap(find.text('Lật để xem nội dung'));
+    await tester.pumpAndSettle();
+    expect(find.text('Đạo hàm và tích phân.'), findsOneWidget);
     await disposePage(tester);
   });
 

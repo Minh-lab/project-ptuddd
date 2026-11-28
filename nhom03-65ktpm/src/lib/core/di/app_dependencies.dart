@@ -51,12 +51,13 @@ class AppDependencies {
   /// vẫn chạy bình thường và chỉ báo đồng bộ ở trạng thái `disabled`.
   factory AppDependencies.create({
     QueryExecutor? executor,
+    String databaseName = 'smart_note',
     AuthRepository? authRepository,
     AiClient? aiClient,
     SupabaseClient? supabaseClient,
     NotesRemoteDataSource? notesRemote,
   }) {
-    final database = AppDatabase(executor);
+    final database = AppDatabase(executor, databaseName);
     final notesDao = NotesDao(database);
     final resolvedAuth = authRepository ?? _firebaseAuthRepository();
     final resolvedAiClient =
@@ -147,6 +148,9 @@ class AppDependencies {
   final AuthRepository authRepository;
   final QuizScoresDao Function() _quizScoresDao;
   QuizScoresDao get quizScoresDao => _quizScoresDao();
+
+  Stream<Set<String>> watchCompletedQuizNoteIds() =>
+      quizScoresDao.watchCompletedNoteIds();
   final AiClient aiClient;
   final SummaryRepository summaryRepository;
 

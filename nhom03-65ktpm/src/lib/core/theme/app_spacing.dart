@@ -76,14 +76,32 @@ abstract final class AppSizes {
   static const double authHeroHeight = 150;
 }
 
-/// Kích thước của bố cục Ghi chú đã duyệt.
+/// Kích thước của màn Ghi chú và thanh điều hướng dưới.
 abstract final class NotesLayout {
-  static const double gutter = 17;
-  static const double gap = 9;
-  static const double cardPadding = 11;
-  static const double cardRadius = 17;
-  static const double searchRadius = 22;
-  static const double controlHeight = 44;
-  static const double tileHeight = 130;
-  static const double navigationHeight = 64;
+  static const double gutter = 16;
+  static const double gap = 12;
+  static const double cardPadding = 14;
+  static const double cardRadius = 18;
+  static const double searchRadius = 24;
+  static const double searchHeight = 48;
+  static const double createSize = 44;
+  static const double avatarSize = 40;
+  static const double actionHeight = 52;
+  static const double actionRadius = 16;
+  static const double actionGap = 10;
+  static const double actionTop = 14;
+  static const double headerBottom = 14;
+  static const double cardTitleTop = 6;
+  static const double topicTop = 18;
+  static const double chipPadding = 14;
+  static const double chipVerticalPadding = 7;
+  static const double badgeRadius = 6;
+  static const double badgePadding = 3;
+  static const double navigationHeight = 68;
+  static const double navigationGap = 68;
+  static const double scanSize = 60;
+  static const double scanRing = 4;
+  static const double bottomPadding = 100;
+  static const double gridAspectRatio = .85;
+  static const double minTileHeight = 192;
 }

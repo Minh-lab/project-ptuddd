@@ -7,10 +7,25 @@ import 'features/auth/presentation/bloc/auth_cubit.dart';
 import 'features/auth/presentation/pages/auth_gate.dart';
 
 /// Widget gốc của SmartNote.
-class SmartNoteApp extends StatelessWidget {
+class SmartNoteApp extends StatefulWidget {
   const SmartNoteApp({required this.dependencies, super.key});
 
   final AppDependencies dependencies;
+
+  @override
+  State<SmartNoteApp> createState() => _SmartNoteAppState();
+}
+
+class _SmartNoteAppState extends State<SmartNoteApp> {
+  ThemeMode _themeMode = ThemeMode.light;
+
+  void _toggleTheme() {
+    setState(() {
+      _themeMode = _themeMode == ThemeMode.dark
+          ? ThemeMode.light
+          : ThemeMode.dark;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,13 +34,17 @@ class SmartNoteApp extends StatelessWidget {
     // `home:` thì route mới sẽ không thấy provider.
     return BlocProvider<AuthCubit>(
       create: (BuildContext context) =>
-          AuthCubit(dependencies.authRepository)..start(),
+          AuthCubit(widget.dependencies.authRepository)..start(),
       child: MaterialApp(
         title: 'SmartNote',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
         darkTheme: AppTheme.dark,
-        home: AuthGate(dependencies: dependencies),
+        themeMode: _themeMode,
+        home: AuthGate(
+          dependencies: widget.dependencies,
+          onThemeChanged: _toggleTheme,
+        ),
       ),
     );
   }

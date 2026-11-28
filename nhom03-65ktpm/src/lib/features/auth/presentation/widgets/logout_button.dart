@@ -6,7 +6,9 @@ import '../bloc/auth_cubit.dart';
 
 /// Nút đăng xuất đặt trên AppBar; hỏi xác nhận trước khi đăng xuất.
 class LogoutButton extends StatelessWidget {
-  const LogoutButton({super.key});
+  const LogoutButton({this.closeParentRoute = false, super.key});
+
+  final bool closeParentRoute;
 
   Future<void> _confirmAndSignOut(BuildContext context) async {
     final messenger = ScaffoldMessenger.of(context);
@@ -21,6 +23,9 @@ class LogoutButton extends StatelessWidget {
 
     if (!confirmed) {
       return;
+    }
+    if (closeParentRoute && context.mounted) {
+      Navigator.of(context).pop();
     }
     await cubit.signOut();
     messenger.showSnackBar(const SnackBar(content: Text('Đã đăng xuất.')));

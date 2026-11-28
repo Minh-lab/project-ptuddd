@@ -56,15 +56,15 @@ class _AppSearchBarState extends State<AppSearchBar> {
             hintText: widget.hintText,
             isDense: widget.dense,
             constraints: widget.dense
-                ? const BoxConstraints(minHeight: NotesLayout.controlHeight)
+                ? const BoxConstraints(minHeight: NotesLayout.searchHeight)
                 : null,
             prefixIconConstraints: widget.dense
                 ? const BoxConstraints.tightFor(
-                    width: NotesLayout.controlHeight,
-                    height: NotesLayout.controlHeight,
+                    width: NotesLayout.searchHeight,
+                    height: NotesLayout.searchHeight,
                   )
                 : null,
-            prefixIcon: const Icon(Icons.search_rounded),
+            prefixIcon: const Icon(Icons.search, size: 20),
             suffixIcon: value.text.isEmpty
                 ? null
                 : IconButton(
@@ -73,8 +73,8 @@ class _AppSearchBarState extends State<AppSearchBar> {
                     icon: const Icon(Icons.close_rounded),
                     constraints: widget.dense
                         ? const BoxConstraints.tightFor(
-                            width: NotesLayout.controlHeight,
-                            height: NotesLayout.controlHeight,
+                            width: NotesLayout.searchHeight,
+                            height: NotesLayout.searchHeight,
                           )
                         : null,
                   ),

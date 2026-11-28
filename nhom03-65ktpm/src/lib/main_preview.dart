@@ -17,6 +17,7 @@ import 'features/notes/domain/entities/note.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final dependencies = AppDependencies.create(
+    databaseName: 'smart_note_preview',
     authRepository: PreviewAuthRepository(),
     // Bản preview không có máy chủ tóm tắt: dùng bản trích câu cục bộ để xem
     // trước màn #12.

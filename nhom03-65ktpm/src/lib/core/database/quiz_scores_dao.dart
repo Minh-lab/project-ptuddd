@@ -18,4 +18,9 @@ class QuizScoresDao extends DatabaseAccessor<AppDatabase>
       ..orderBy([(QuizScores t) => OrderingTerm.desc(t.completedAt)]);
     return query.get();
   }
+
+  Stream<Set<String>> watchCompletedNoteIds() =>
+      select(quizScores)
+          .watch()
+          .map((rows) => rows.map((row) => row.noteId).toSet());
 }

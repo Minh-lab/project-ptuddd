@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_note/core/di/app_dependencies.dart';
 import 'package:smart_note/core/navigation/app_shell.dart';
 import 'package:smart_note/core/theme/app_theme.dart';
+import 'package:smart_note/core/widgets/notes_dock.dart';
 import 'package:smart_note/features/notes/presentation/bloc/notes_cubit.dart';
 
 import '../../support/fake_auth_repository.dart';
@@ -47,16 +48,14 @@ void main() {
   ) async {
     await pumpShell(tester);
 
-    // Chỉ được có một thanh điều hướng: tab Ghi chú không lồng thanh riêng.
-    expect(find.byType(NavigationBar), findsOneWidget);
-    final Finder outerBar = find.byType(NavigationBar);
-    expect(
-      find.descendant(
-        of: outerBar,
-        matching: find.byType(NavigationDestination),
-      ),
-      findsNWidgets(4),
+    final Finder outerBar = find.byType(BottomAppBar);
+    expect(outerBar, findsOneWidget);
+    final scanButton = find.widgetWithIcon(
+      FloatingActionButton,
+      Icons.document_scanner_outlined,
     );
+    expect(scanButton, findsOneWidget);
+    expect(tester.getCenter(scanButton).dx, tester.getCenter(outerBar).dx);
     for (final String label in <String>[
       'Ghi chú',
       'Nhật ký',
@@ -65,10 +64,14 @@ void main() {
     ]) {
       expect(
         find.descendant(of: outerBar, matching: find.text(label)),
-        findsWidgets,
+        findsOneWidget,
         reason: 'Thiếu tab $label',
       );
     }
+
+    await tester.tap(scanButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Quét vở'), findsOneWidget);
 
     await disposeShell(tester);
   });
@@ -76,9 +79,7 @@ void main() {
   testWidgets('Mặc định mở tab Ghi chú', (WidgetTester tester) async {
     await pumpShell(tester);
 
-    final NavigationBar bar = tester.widget<NavigationBar>(
-      find.byType(NavigationBar),
-    );
+    final NotesDock bar = tester.widget<NotesDock>(find.byType(NotesDock));
     expect(bar.selectedIndex, 0);
     expect(tester.widget<IndexedStack>(find.byType(IndexedStack)).index, 0);
 
@@ -109,7 +110,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(tester.widget<IndexedStack>(find.byType(IndexedStack)).index, 3);
 
-      // Nhãn trên NavigationBar nằm sau các trang trong cây widget, nên `.last`
+      // Nhãn trên NotesDock nằm sau các trang trong cây widget, nên `.last`
       // là nhãn tab cần bấm.
       await tester.tap(find.text('Ghi chú').last);
       await tester.pumpAndSettle();

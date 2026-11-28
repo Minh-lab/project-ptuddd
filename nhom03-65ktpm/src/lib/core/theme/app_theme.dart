@@ -25,68 +25,65 @@ abstract final class AppTheme {
   static ThemeData notes(ThemeData base) {
     final dark = base.brightness == Brightness.dark;
     final scheme = base.colorScheme.copyWith(
-      primary: const Color(0xFF4721D5),
-      onPrimary: const Color(0xFFFFFFFF),
-      primaryContainer: dark
-          ? const Color(0xFF3B2A67)
-          : const Color(0xFFE5DBFF),
-      onPrimaryContainer: dark
-          ? const Color(0xFFEDE4FF)
-          : const Color(0xFF21154B),
-      surface: dark ? const Color(0xFF171323) : const Color(0xFFFBF9FF),
-      onSurface: dark ? const Color(0xFFF5EEFF) : const Color(0xFF21154B),
-      onSurfaceVariant: dark
-          ? const Color(0xFFC8BCDF)
-          : const Color(0xFF63547E),
-      surfaceContainerHigh: dark
-          ? const Color(0xFF2A2140)
-          : const Color(0xFFF0EAFF),
-      outlineVariant: dark ? const Color(0xFF483663) : const Color(0xFFE4D9FF),
+      primary: dark ? NotesColors.purple : NotesColors.cobalt,
+      onPrimary: NotesColors.white,
+      surface: dark ? NotesColors.background : NotesColors.white,
+      onSurface: dark ? NotesColors.text : NotesColors.slate900,
+      onSurfaceVariant: dark ? NotesColors.muted : NotesColors.slate500,
+      surfaceContainerHigh: dark ? NotesColors.surface : NotesColors.slate100,
+      outlineVariant: dark ? NotesColors.border : NotesColors.slate200,
     );
     final inputBorder = OutlineInputBorder(
       borderRadius: BorderRadius.circular(NotesLayout.searchRadius),
       borderSide: BorderSide(color: scheme.outlineVariant),
     );
-    final typography = base.textTheme;
+    final typography = base.textTheme.apply(fontFamily: 'Inter');
     return base.copyWith(
       colorScheme: scheme,
       scaffoldBackgroundColor: scheme.surface,
       textTheme: typography.copyWith(
-        headlineLarge: typography.headlineLarge?.copyWith(
-          fontSize: 47,
-          fontWeight: FontWeight.w900,
-          letterSpacing: -2.6,
-          height: 1.12,
-          color: scheme.onSurface,
-        ),
-        headlineSmall: typography.headlineSmall?.copyWith(
-          fontSize: 21,
+        headlineLarge: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 34,
           fontWeight: FontWeight.w800,
-          letterSpacing: -.55,
-          height: 1.12,
-          color: scheme.onSurface,
+          height: 1.15,
+        ).copyWith(color: scheme.onSurface),
+        headlineSmall: typography.headlineSmall?.copyWith(
+          fontSize: 22,
+          fontWeight: FontWeight.w800,
         ),
         titleMedium: typography.titleMedium?.copyWith(
-          fontSize: 17,
-          fontWeight: FontWeight.w800,
-          color: scheme.onSurface,
+          fontSize: 18,
+          fontWeight: FontWeight.w700,
+          height: 1.25,
         ),
         titleSmall: typography.titleSmall?.copyWith(
-          fontSize: 15,
-          fontWeight: FontWeight.w800,
-          letterSpacing: -.3,
-          height: 1.12,
-          color: scheme.onSurface,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          height: 1.22,
+          letterSpacing: 0,
         ),
         bodySmall: typography.bodySmall?.copyWith(
-          fontSize: 11,
-          height: 1.22,
+          fontSize: 13,
+          height: 1.35,
+          letterSpacing: 0,
           color: scheme.onSurfaceVariant,
         ),
         labelLarge: typography.labelLarge?.copyWith(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          height: 1.2,
+          letterSpacing: 0,
+        ),
+        labelMedium: typography.labelMedium?.copyWith(
           fontSize: 12,
-          fontWeight: FontWeight.w700,
-          color: scheme.onSurfaceVariant,
+          height: 1.2,
+          letterSpacing: 0,
+        ),
+        labelSmall: typography.labelSmall?.copyWith(
+          fontSize: 11,
+          height: 1.2,
+          letterSpacing: 0,
         ),
       ),
       inputDecorationTheme: base.inputDecorationTheme.copyWith(
@@ -95,32 +92,14 @@ abstract final class AppTheme {
         border: inputBorder,
         enabledBorder: inputBorder,
         focusedBorder: inputBorder.copyWith(
-          borderSide: BorderSide(
-            color: dark ? scheme.onPrimaryContainer : scheme.primary,
-          ),
+          borderSide: BorderSide(color: NotesColors.accent(base.brightness)),
         ),
-        hintStyle: typography.bodyMedium?.copyWith(color: scheme.onSurface),
-        prefixIconColor: scheme.onSurface,
-        suffixIconColor: scheme.onSurface,
-      ),
-      navigationBarTheme: base.navigationBarTheme.copyWith(
-        height: NotesLayout.navigationHeight,
-        backgroundColor: scheme.surface,
-        indicatorColor: scheme.primary,
-        iconTheme: WidgetStateProperty.resolveWith(
-          (states) => IconThemeData(
-            size: 20,
-            color: states.contains(WidgetState.selected)
-                ? scheme.onPrimary
-                : scheme.onSurface,
-          ),
+        hintStyle: typography.bodyMedium?.copyWith(
+          fontSize: 15,
+          color: scheme.onSurfaceVariant,
         ),
-        labelTextStyle: WidgetStatePropertyAll(
-          typography.labelMedium?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: scheme.onSurface,
-          ),
-        ),
+        prefixIconColor: scheme.onSurfaceVariant,
+        suffixIconColor: scheme.onSurfaceVariant,
       ),
     );
   }

@@ -21,9 +21,10 @@ import 'login_page.dart';
 /// Nhờ vậy người dùng đã đăng nhập được vào thẳng app, còn người chưa đăng
 /// nhập không mở được màn hình chính.
 class AuthGate extends StatelessWidget {
-  const AuthGate({required this.dependencies, super.key});
+  const AuthGate({required this.dependencies, this.onThemeChanged, super.key});
 
   final AppDependencies dependencies;
+  final VoidCallback? onThemeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +42,12 @@ class AuthGate extends StatelessWidget {
             )..load(),
             child: AppShell(
               notesDependencies: dependencies,
-              notesActions: const <Widget>[LogoutButton()],
+              accountName: state.user?.displayName,
+              accountEmail: state.user?.email,
+              onThemeChanged: onThemeChanged,
+              notesActions: const <Widget>[
+                LogoutButton(closeParentRoute: true),
+              ],
             ),
           );
         }
