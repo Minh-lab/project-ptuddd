@@ -219,37 +219,152 @@ class AppNoteTones extends ThemeExtension<AppNoteTones> {
   }
 }
 
-/// Sáu tông chủ đề trong mẫu Ghi chú. Các nền sáng dùng cùng mực tím,
-/// riêng thẻ tím đậm dùng chữ trắng để giữ tương phản.
-abstract final class NotesTopicColors {
-  static const _ink = Color(0xFF21154B);
-  static const light = <Color>[
-    Color(0xFF502BE0),
-    Color(0xFFFFC2A2),
-    Color(0xFFE5DBFF),
-    Color(0xFFD8EDAC),
-    Color(0xFFFFE5A1),
-    Color(0xFFE0E9FF),
-  ];
-  static const dark = <Color>[
-    Color(0xFF502BE0),
-    Color(0xFF523223),
-    Color(0xFF392866),
-    Color(0xFF2F4527),
-    Color(0xFF49391C),
-    Color(0xFF29375D),
-  ];
-  static const darkInk = <Color>[
-    Color(0xFFFFFFFF),
-    Color(0xFFFFD6C0),
-    Color(0xFFEDE0FF),
-    Color(0xFFE7F6CF),
-    Color(0xFFFFE9B0),
-    Color(0xFFE0E9FF),
-  ];
+/// Màu riêng của thư viện ghi chú và dock theo đặc tả thiết kế.
+abstract final class NotesColors {
+  static const cobalt = Color(0xFF2563EB);
+  static const white = Color(0xFFFFFFFF);
+  static const slate100 = Color(0xFFF1F5F9);
+  static const slate200 = Color(0xFFE2E8F0);
+  static const slate600 = Color(0xFF475569);
+  static const slate500 = Color(0xFF64748B);
+  static const slate700 = Color(0xFF334155);
+  static const slate900 = Color(0xFF0F172A);
+  static const blue50 = Color(0xFFEFF6FF);
+  static const blue200 = Color(0xFFBFDBFE);
+  static const blue700 = Color(0xFF1D4ED8);
 
-  static Color foreground(int index, Brightness brightness) =>
-      brightness == Brightness.dark
-      ? darkInk[index]
-      : (index == 0 ? darkInk[0] : _ink);
+  static Color accent(Brightness brightness) =>
+      brightness == Brightness.dark ? purpleBright : cobalt;
+
+  static Color chipText(Brightness brightness) =>
+      brightness == Brightness.dark ? text : slate700;
+
+  static Color selectedChip(Brightness brightness) =>
+      brightness == Brightness.dark ? purple : slate900;
+
+  static const background = Color(0xFF0F0F17);
+  static const surface = Color(0xFF1B1B28);
+  static const nav = Color(0xFF161622);
+  static const border = Color(0xFF2B2B3D);
+  static const navBorder = Color(0xFF2A2A3D);
+  static const purple = Color(0xFF6D28D9);
+  static const purpleBright = Color(0xFF7C3AED);
+  static const text = Color(0xFFF3F4F6);
+  static const muted = Color(0xFF9CA3AF);
+  static const cardText = Color(0xFFE5E7EB);
+  static const cardDate = Color(0xFFD1D5DB);
+  static const action = Color(0xFF1E1B2E);
+  static const actionBorder = Color(0xFF322C4A);
+  static const actionIcons = [
+    Color(0xFFC4B5FD),
+    Color(0xFFA7F3D0),
+    Color(0xFFFDE68A),
+  ];
+  static const lightActionIcons = [cobalt, slate600, cobalt];
+  static const physicsGradient = [Color(0xFFE08600), Color(0xFFD97706)];
+  static const physicsInk = Color(0xFF261705);
+  static const quizBadge = Color(0x47000000);
+
+  static Color navigation(Brightness brightness) =>
+      brightness == Brightness.dark ? nav : white;
+}
+
+/// Dùng chung cách ghép nhãn chủ đề với màu và biểu tượng cho bộ lọc và thẻ.
+enum NotesTopic {
+  math(
+    'Toán',
+    Icons.functions,
+    0xFF3B265E,
+    0xFF2B213F,
+    0xFFC4B5FD,
+    0xFF2563EB,
+    0xFFBFDBFE,
+  ),
+  physics(
+    'Vật lý',
+    Icons.bolt,
+    0xFFD97706,
+    0xFF5C3B14,
+    0xFFFDE68A,
+    0xFFFED7AA,
+    0xFFC2410C,
+  ),
+  english(
+    'Tiếng Anh',
+    Icons.translate,
+    0xFF353766,
+    0xFF4D4119,
+    0xFFE2E8F0,
+    0xFFE0F2FE,
+    0xFF0369A1,
+  ),
+  biology(
+    'Sinh học',
+    Icons.spa_outlined,
+    0xFF214D3B,
+    0xFF1E3F31,
+    0xFFA7F3D0,
+    0xFFCCFBF1,
+    0xFF0F766E,
+  ),
+  history(
+    'Lịch sử',
+    Icons.history_edu_outlined,
+    0xFF4A3328,
+    0xFF4A3328,
+    0xFFFDBA74,
+    0xFFFDE68A,
+    0xFFB45309,
+  ),
+  diary(
+    'Nhật ký',
+    Icons.auto_stories_outlined,
+    0xFF2A2A3C,
+    0xFF2A2A3C,
+    0xFFD1D5DB,
+    0xFFF1F5F9,
+    0xFF475569,
+  ),
+  other(
+    'Ghi chú',
+    Icons.description_outlined,
+    0xFF28283E,
+    0xFF28283E,
+    0xFFD1D5DB,
+    0xFFF1F5F9,
+    0xFF475569,
+  );
+
+  const NotesTopic(
+    this.label,
+    this.icon,
+    this._card,
+    this._chip,
+    this._ink,
+    this._light,
+    this._lightInk,
+  );
+
+  final String label;
+  final IconData icon;
+  final int _card;
+  final int _chip;
+  final int _ink;
+  final int _light;
+  final int _lightInk;
+
+  static NotesTopic fromLabel(String label) {
+    final normalized = label.trim().toLowerCase();
+    return switch (normalized) {
+      'toán học' => math,
+      _ => values.firstWhere(
+        (topic) => topic.label.toLowerCase() == normalized,
+        orElse: () => other,
+      ),
+    };
+  }
+
+  Color card(bool dark) => Color(dark ? _card : _light);
+  Color chip(bool dark) => dark ? Color(_chip) : NotesColors.slate200;
+  Color labelColor(bool dark) => Color(dark ? _ink : _lightInk);
 }

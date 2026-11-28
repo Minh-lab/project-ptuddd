@@ -186,6 +186,8 @@ void main() {
 
     await tester.tap(find.byTooltip('Bộ lọc và công cụ'));
     await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Tài khoản'));
+    await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Đăng xuất'));
     await tester.pumpAndSettle();
     await tester.tap(find.widgetWithText(FilledButton, 'Đăng xuất'));

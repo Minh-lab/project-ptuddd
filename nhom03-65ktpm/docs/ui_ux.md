@@ -1,6 +1,17 @@
 # Design System & Luật UI/UX – SmartNote (Nhóm 03, 65KTPM)
 
-> **Mẫu Ghi chú duyệt ngày 27/11/2026.** Dùng [ảnh bảng chủ đề](SmartNote_UI_Reference_Assets/approved-notes.png) với nút tạo cạnh tiêu đề, tìm kiếm dạng pill, lưới thẻ cùng kích thước theo điều chỉnh đã thống nhất. Nhấn **Theo chủ đề** để mở bộ lọc và công cụ hiện có. Token màu và chữ riêng của màn nằm trong `AppTheme.notes` và `NotesTopicColors`.
+> **Màn Ghi chú Cobalt & Slate.** Đặc tả Minh cung cấp dùng nền trắng,
+> bề mặt Slate 100 và màu nhấn `#2563EB`. Mặc định là giao diện sáng,
+> chữ Inter và thẻ màu theo môn. Hàng trợ giúp gồm trắc nghiệm, flashcard và
+> tóm tắt. Bộ lọc mở mặc định, có thể thu gọn. Các tab nằm trên dock Material 3
+> với nút Quét vở ở giữa. Màu và khoảng cách nằm trong `core/theme/`.
+> Đổi sáng/tối từ hồ sơ. Nhãn `AI Quiz` dựa vào lịch sử bài đã nộp.
+
+Bố cục tiếp tục dùng lưới thư viện đã tham khảo Google Keep. [Bottom App Bar
+của Flutter](https://api.flutter.dev/flutter/material/BottomAppBar-class.html)
+là cơ sở triển khai phần khoét cho nút Quét vở. Nút này hiển thị trạng thái
+chờ tích hợp trong nhánh hiện tại. Màn Ghi chú vẫn dùng bộ trạng thái tải,
+rỗng và lỗi của thư viện widget chung.
 
 - **Ban hành:** 22/11/2026, trong phạm vi issue **#4** (Thiết kế UI/UX nền tảng) — người phụ trách: Nguyễn Minh.
 - **Áp dụng cho:** mọi màn hình, widget và PR có thay đổi giao diện trong `nhom03-65ktpm/src`.

@@ -1,13 +1,18 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../../core/di/app_dependencies.dart';
+import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/app_search_bar.dart';
 import '../../../../core/widgets/empty_state.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
+import '../../../../core/widgets/notes_quick_action.dart';
+import '../../../summary/presentation/pages/summary_page.dart';
 import '../../domain/entities/note.dart';
 import '../bloc/notes_cubit.dart';
 import '../bloc/notes_state.dart';
@@ -15,17 +20,24 @@ import '../services/word_export_service.dart';
 import '../widgets/note_card.dart';
 import '../widgets/sync_status_indicator.dart';
 import 'note_editor_page.dart';
+import 'note_flashcard_page.dart';
 import 'quiz_page.dart';
 
 /// Thư viện ghi chú theo mẫu bảng chủ đề đã duyệt.
 class NotesPage extends StatefulWidget {
   const NotesPage({
     required this.dependencies,
+    this.accountName,
+    this.accountEmail,
+    this.onThemeChanged,
     this.actions = const <Widget>[],
     super.key,
   });
 
   final AppDependencies dependencies;
+  final String? accountName;
+  final String? accountEmail;
+  final VoidCallback? onThemeChanged;
 
   /// Widget hành động trong vùng bộ lọc và công cụ, do nơi điều hướng truyền vào (ví dụ nút
   /// đăng xuất). Nhờ vậy feature notes không phải import feature auth.
@@ -38,7 +50,9 @@ class NotesPage extends StatefulWidget {
 class _NotesPageState extends State<NotesPage> {
   final Set<String> _selectedIds = <String>{};
   bool _isGrid = true;
-  bool _showTools = false;
+  bool _showTopics = true;
+  late final Stream<Set<String>> _completedQuizIds = widget.dependencies
+      .watchCompletedQuizNoteIds();
   String _query = '';
   String? _selectedTag;
 
@@ -49,7 +63,11 @@ class _NotesPageState extends State<NotesPage> {
     for (final note in notes) {
       tags.addAll(note.tags.where((String tag) => tag.trim().isNotEmpty));
     }
-    return tags.toList()..sort();
+    return tags.toList()..sort((a, b) {
+      final subjectOrder = NotesTopic.fromLabel(a).index
+          .compareTo(NotesTopic.fromLabel(b).index);
+      return subjectOrder == 0 ? a.compareTo(b) : subjectOrder;
+    });
   }
 
   List<Note> _filter(List<Note> notes) {
@@ -101,7 +119,7 @@ class _NotesPageState extends State<NotesPage> {
                   SliverPadding(
                     padding: const EdgeInsets.fromLTRB(
                       NotesLayout.gutter,
-                      AppSpacing.xl,
+                      AppSpacing.md,
                       NotesLayout.gutter,
                       NotesLayout.gap,
                     ),
@@ -110,6 +128,9 @@ class _NotesPageState extends State<NotesPage> {
                     ),
                   ),
                   ..._bodySlivers(context, state, filtered, cubit),
+                  const SliverToBoxAdapter(
+                    child: SizedBox(height: NotesLayout.bottomPadding),
+                  ),
                 ],
               ),
             ),
@@ -152,20 +173,24 @@ class _NotesPageState extends State<NotesPage> {
                 icon: const Icon(Icons.close),
                 onPressed: () => setState(_selectedIds.clear),
               ),
-            ] else
+            ] else ...[
+              _accountAvatar(context),
+              const SizedBox(width: NotesLayout.actionGap),
               IconButton.filled(
                 tooltip: 'Tạo ghi chú',
                 style: IconButton.styleFrom(
-                  minimumSize: const Size.square(NotesLayout.controlHeight),
+                  fixedSize: const Size.square(NotesLayout.createSize),
+                  minimumSize: const Size.square(NotesLayout.createSize),
                   backgroundColor: colors.primary,
                   foregroundColor: colors.onPrimary,
                 ),
                 onPressed: () => _showCreateSheet(context, cubit),
-                icon: const Icon(Icons.add_rounded),
+                icon: const Icon(Icons.add, size: 24),
               ),
+            ],
           ],
         ),
-        const SizedBox(height: AppSpacing.lg),
+        const SizedBox(height: NotesLayout.headerBottom),
         Visibility(
           visible: !_selectionMode,
           maintainState: true,
@@ -178,7 +203,9 @@ class _NotesPageState extends State<NotesPage> {
         if (_selectionMode)
           const Text('Chọn thêm hoặc xuất tài liệu Word')
         else ...[
-          const SizedBox(height: AppSpacing.md),
+          const SizedBox(height: NotesLayout.actionTop),
+          _quickActions(context, state, cubit),
+          const SizedBox(height: NotesLayout.topicTop - AppSpacing.sm),
           Row(
             children: [
               Expanded(
@@ -187,7 +214,7 @@ class _NotesPageState extends State<NotesPage> {
                   child: Tooltip(
                     message: 'Bộ lọc và công cụ',
                     child: InkWell(
-                      onTap: () => setState(() => _showTools = !_showTools),
+                      onTap: () => setState(() => _showTopics = !_showTopics),
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           vertical: AppSpacing.sm,
@@ -197,16 +224,22 @@ class _NotesPageState extends State<NotesPage> {
                           children: [
                             Flexible(
                               child: Text(
-                                _selectedTag ?? 'Theo chủ đề',
-                                style: theme.textTheme.titleMedium,
+                                _showTopics
+                                    ? 'Theo chủ đề'
+                                    : _selectedTag ?? 'Theo chủ đề',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  color: colors.onSurface,
+                                ),
                               ),
                             ),
                             const SizedBox(width: AppSpacing.xs),
                             Icon(
-                              _showTools
-                                  ? Icons.expand_less
-                                  : Icons.expand_more,
-                              size: AppSpacing.lg,
+                              _showTopics
+                                  ? Icons.keyboard_arrow_down
+                                  : Icons.chevron_right,
+                              size: 20,
                               color: colors.onSurfaceVariant,
                             ),
                           ],
@@ -221,8 +254,22 @@ class _NotesPageState extends State<NotesPage> {
                 child: Text(
                   _subtitle(state, count),
                   textAlign: TextAlign.end,
-                  style: theme.textTheme.labelLarge,
+                  style: theme.textTheme.bodySmall,
                 ),
+              ),
+              const SizedBox(width: AppSpacing.xs),
+              IconButton(
+                tooltip: _isGrid ? 'Xem dạng danh sách' : 'Xem dạng lưới',
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                iconSize: 19,
+                color: colors.onSurfaceVariant,
+                icon: Icon(
+                  _isGrid
+                      ? Icons.view_agenda_outlined
+                      : Icons.grid_view_rounded,
+                ),
+                onPressed: () => setState(() => _isGrid = !_isGrid),
               ),
               SyncStatusIndicator(
                 status: state.syncStatus,
@@ -230,33 +277,14 @@ class _NotesPageState extends State<NotesPage> {
               ),
             ],
           ),
-          if (_showTools) ...[
-            if (tags.isNotEmpty)
-              Wrap(
-                spacing: AppSpacing.sm,
-                children: [
-                  _tagChip(label: 'Tất cả', tag: null),
-                  for (final tag in tags) _tagChip(label: tag, tag: tag),
-                ],
-              ),
+          if (_showTopics) ...[
+            const SizedBox(height: AppSpacing.sm),
             Wrap(
-              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: AppSpacing.sm,
+              runSpacing: AppSpacing.sm,
               children: [
-                IconButton(
-                  tooltip: 'Trắc nghiệm từ ghi chú',
-                  icon: const Icon(Icons.quiz_outlined),
-                  onPressed: () => _openQuiz(context, cubit),
-                ),
-                IconButton(
-                  tooltip: _isGrid ? 'Xem dạng danh sách' : 'Xem dạng lưới',
-                  icon: Icon(
-                    _isGrid
-                        ? Icons.view_agenda_outlined
-                        : Icons.grid_view_rounded,
-                  ),
-                  onPressed: () => setState(() => _isGrid = !_isGrid),
-                ),
-                ...widget.actions,
+                _tagChip(context, label: 'Tất cả', tag: null),
+                for (final tag in tags) _tagChip(context, label: tag, tag: tag),
               ],
             ),
           ],
@@ -265,15 +293,221 @@ class _NotesPageState extends State<NotesPage> {
     );
   }
 
-  Widget _tagChip({required String label, required String? tag}) => ChoiceChip(
-    label: Text(label),
-    selected: _selectedTag == tag,
-    showCheckmark: false,
-    onSelected: (_) => setState(() {
-      _selectedTag = tag;
-      _showTools = false;
-    }),
-  );
+  Widget _accountAvatar(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final name = widget.accountName?.trim() ?? '';
+    final email = widget.accountEmail?.trim() ?? '';
+    final identity = name.isEmpty ? email : name;
+    return Tooltip(
+      message: 'Tài khoản',
+      child: Semantics(
+        button: true,
+        label: 'Tài khoản',
+        child: InkResponse(
+          onTap: () => _openAccount(context),
+          radius: NotesLayout.avatarSize / 2,
+          child: CircleAvatar(
+            radius: NotesLayout.avatarSize / 2,
+            backgroundColor: colors.surfaceContainerHigh,
+            foregroundColor: colors.onSurface,
+            child: identity.isEmpty
+                ? const Icon(Icons.person_outline, size: 22)
+                : Text(identity.characters.first.toUpperCase()),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _openAccount(BuildContext context) {
+    final name = widget.accountName?.trim() ?? '';
+    final email = widget.accountEmail?.trim() ?? '';
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    showModalBottomSheet<void>(
+      context: context,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              ListTile(
+                leading: const Icon(Icons.account_circle_outlined),
+                title: Text(name.isEmpty ? 'Tài khoản' : name),
+                subtitle: email.isEmpty ? null : Text(email),
+              ),
+              if (widget.onThemeChanged != null)
+                ListTile(
+                  leading: Icon(
+                    dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                  ),
+                  title: Text(
+                    dark ? 'Dùng giao diện sáng' : 'Dùng giao diện tối',
+                  ),
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    widget.onThemeChanged!();
+                  },
+                ),
+              if (widget.actions.isNotEmpty)
+                Wrap(alignment: WrapAlignment.center, children: widget.actions),
+              const SizedBox(height: AppSpacing.sm),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _quickActions(
+    BuildContext context,
+    NotesState state,
+    NotesCubit cubit,
+  ) {
+    final colors = Theme.of(context).brightness == Brightness.dark
+        ? NotesColors.actionIcons
+        : NotesColors.lightActionIcons;
+    final actions = [
+      ('Trắc\nnghiệm AI', Icons.quiz_outlined, () => _openQuiz(context, cubit)),
+      (
+        'Ôn tập /\nFlashcard',
+        Icons.style_outlined,
+        () => _openNoteAction(context, state.notes, summarize: false),
+      ),
+      (
+        'Tóm tắt\nAI',
+        Icons.auto_awesome_outlined,
+        () => _openNoteAction(context, state.notes, summarize: true),
+      ),
+    ];
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final scale = MediaQuery.textScalerOf(context).scale(13) / 13;
+        final width = ((constraints.maxWidth - 2 * NotesLayout.actionGap) / 3)
+            .clamp(118.0 * math.max(1, scale), math.max(180.0, 118 * scale))
+            .toDouble();
+        return SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          child: Row(
+            children: [
+              for (final (index, (label, icon, onPressed))
+                  in actions.indexed) ...[
+                if (index > 0) const SizedBox(width: NotesLayout.actionGap),
+                SizedBox(
+                  width: width,
+                  child: NotesQuickAction(
+                    label: label,
+                    icon: icon,
+                    color: colors[index],
+                    onPressed: onPressed,
+                  ),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _tagChip(
+    BuildContext context, {
+    required String label,
+    required String? tag,
+  }) {
+    final theme = Theme.of(context);
+    final scheme = theme.colorScheme;
+    final dark = theme.brightness == Brightness.dark;
+    final selected = _selectedTag == tag;
+    final topic = NotesTopic.fromLabel(label);
+    return ChoiceChip(
+      label: Text(label),
+      labelStyle: theme.textTheme.labelLarge?.copyWith(
+        color: selected
+            ? scheme.onPrimary
+            : dark
+            ? topic.labelColor(dark)
+            : NotesColors.chipText(theme.brightness),
+        fontWeight: FontWeight.w600,
+      ),
+      labelPadding: EdgeInsets.zero,
+      padding: const EdgeInsets.symmetric(
+        horizontal: NotesLayout.chipPadding,
+        vertical: NotesLayout.chipVerticalPadding,
+      ),
+      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+      shape: const StadiumBorder(),
+      side: BorderSide.none,
+      backgroundColor: topic.chip(dark),
+      selectedColor: NotesColors.selectedChip(theme.brightness),
+      selected: selected,
+      showCheckmark: false,
+      onSelected: (_) => setState(() => _selectedTag = tag),
+    );
+  }
+
+  Future<void> _openNoteAction(
+    BuildContext context,
+    List<Note> notes, {
+    required bool summarize,
+  }) async {
+    final available = notes
+        .where((note) => note.content.trim().isNotEmpty)
+        .toList();
+    if (available.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Hãy thêm nội dung vào ghi chú trước.')),
+      );
+      return;
+    }
+    final navigator = Navigator.of(context);
+    final note = await showModalBottomSheet<Note>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: FractionallySizedBox(
+          heightFactor: .60,
+          child: Column(
+            children: [
+              ListTile(
+                title: Text(
+                  summarize
+                      ? 'Chọn ghi chú để tóm tắt'
+                      : 'Chọn ghi chú để ôn tập',
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: available.length,
+                  itemBuilder: (_, index) => ListTile(
+                    leading: const Icon(Icons.description_outlined),
+                    title: Text(available[index].displayTitle),
+                    onTap: () =>
+                        Navigator.of(sheetContext).pop(available[index]),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (!mounted || note == null) return;
+    await navigator.push(
+      summarize
+          ? SummaryPage.route(
+              noteId: note.id,
+              noteTitle: note.displayTitle,
+              noteContent: note.content,
+              repository: widget.dependencies.summaryRepository,
+              isDemo: widget.dependencies.aiClient.isDemo,
+            )
+          : MaterialPageRoute<void>(
+              builder: (_) => NoteFlashcardPage(note: note),
+            ),
+    );
+  }
 
   List<Widget> _bodySlivers(
     BuildContext context,
@@ -307,52 +541,84 @@ class _NotesPageState extends State<NotesPage> {
     const horizontalPadding = EdgeInsets.symmetric(
       horizontal: NotesLayout.gutter,
     );
-    if (!_isGrid) {
-      return [
-        SliverPadding(
-          padding: horizontalPadding,
-          sliver: SliverList.separated(
-            itemCount: filtered.length,
-            separatorBuilder: (_, _) => const SizedBox(height: NotesLayout.gap),
-            itemBuilder: (_, index) => _card(filtered[index], cubit),
-          ),
-        ),
-        const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
-      ];
-    }
-    final textScale = MediaQuery.textScalerOf(context).scale(16) / 16;
-    final width = MediaQuery.sizeOf(context).width;
-    final columns = width >= 840
-        ? 4
-        : (width >= 600 ? 3 : (width < 310 || textScale > 1.5 ? 1 : 2));
-    final extraHeight =
-        (NotesLayout.tileHeight - NotesLayout.cardPadding * 2) *
-        (textScale - 1).clamp(0.0, double.infinity);
     return [
-      SliverPadding(
-        padding: horizontalPadding,
-        sliver: SliverGrid.builder(
+      StreamBuilder<Set<String>>(
+        stream: _completedQuizIds,
+        builder: (context, snapshot) {
+          final quizIds = snapshot.data ?? const <String>{};
+          return SliverPadding(
+            padding: horizontalPadding,
+            sliver: _isGrid
+                ? _grid(context, filtered, cubit, quizIds)
+                : SliverList.separated(
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: NotesLayout.gap),
+                    itemBuilder: (_, index) => _card(
+                      filtered[index],
+                      cubit,
+                      hasQuiz: quizIds.contains(filtered[index].id),
+                    ),
+                  ),
+          );
+        },
+      ),
+    ];
+  }
+
+  Widget _grid(
+    BuildContext context,
+    List<Note> filtered,
+    NotesCubit cubit,
+    Set<String> quizIds,
+  ) {
+    final textScale = MediaQuery.textScalerOf(context).scale(16) / 16;
+    return SliverLayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.crossAxisExtent;
+        final columns = switch (width) {
+          >= 808 => 4,
+          >= 568 => 3,
+          < 278 => 1,
+          _ when textScale > 1.5 => 1,
+          _ => 2,
+        };
+        final tileWidth = (width - (columns - 1) * NotesLayout.gap) / columns;
+        final minHeight = NotesLayout.minTileHeight * math.max(1, textScale);
+        return SliverGrid.builder(
           itemCount: filtered.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: columns,
             crossAxisSpacing: NotesLayout.gap,
             mainAxisSpacing: NotesLayout.gap,
-            mainAxisExtent: NotesLayout.tileHeight + extraHeight,
+            mainAxisExtent: math.max(
+              tileWidth / NotesLayout.gridAspectRatio,
+              minHeight,
+            ),
           ),
-          itemBuilder: (_, index) =>
-              _card(filtered[index], cubit, compact: true),
-        ),
-      ),
-      const SliverToBoxAdapter(child: SizedBox(height: AppSpacing.lg)),
-    ];
+          itemBuilder: (_, index) => _card(
+            filtered[index],
+            cubit,
+            compact: true,
+            hasQuiz: quizIds.contains(filtered[index].id),
+          ),
+        );
+      },
+    );
   }
 
-  Widget _card(Note note, NotesCubit cubit, {bool compact = false}) {
+  Widget _card(
+    Note note,
+    NotesCubit cubit, {
+    bool compact = false,
+    required bool hasQuiz,
+  }) {
     final selected = _selectedIds.contains(note.id);
     return NoteCard(
       key: ValueKey(note.id),
       note: note,
       compact: compact,
+      hasQuiz: hasQuiz,
       selected: selected,
       onLongPress: () => setState(() => _selectedIds.add(note.id)),
       onTap: () {
