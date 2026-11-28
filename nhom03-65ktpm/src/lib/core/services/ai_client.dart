@@ -49,7 +49,7 @@ class HttpAiTransport implements AiTransport {
   void close() => _client.close();
 }
 
-/// Client gọi **máy chủ trung gian** tóm tắt ghi chú (#12).
+/// Client gọi **máy chủ trung gian** cho các tính năng AI của ghi chú (#12, #13).
 ///
 /// API key của Gemini nằm ở server; app chỉ biết địa chỉ endpoint, nên không
 /// có khoá nào bị nhúng vào APK. Địa chỉ đọc từ `--dart-define`:
@@ -133,18 +133,105 @@ class AiClient {
     String? noteId,
     String? title,
   }) async {
+    final response = await _request(
+      text: text,
+      mode: mode,
+      noteId: noteId,
+      title: title,
+      featureName: 'tóm tắt',
+    );
+    return _readSummary(response);
+  }
+
+  /// Yêu cầu máy chủ tạo 5–10 câu trắc nghiệm có đáp án và giải thích.
+  Future<List<Map<String, Object?>>> generateQuiz({
+    required String text,
+    required String noteId,
+    required String title,
+  }) async {
+    final response = await _request(
+      text: text,
+      mode: 'quiz',
+      noteId: noteId,
+      title: title,
+      featureName: 'trắc nghiệm',
+    );
+    _ensureSuccessful(response, featureName: 'trắc nghiệm');
+    try {
+      final decoded = jsonDecode(response.body);
+      if (decoded is! Map<String, dynamic> || decoded['quiz'] is! List) {
+        throw const FormatException('Thiếu danh sách câu hỏi.');
+      }
+      final rawQuestions = decoded['quiz'] as List<dynamic>;
+      if (rawQuestions.length < 5 || rawQuestions.length > 10) {
+        throw const FormatException('Số câu hỏi phải từ 5 đến 10.');
+      }
+      return rawQuestions.map((Object? raw) {
+        if (raw is! Map<String, dynamic> ||
+            raw['question'] is! String ||
+            raw['options'] is! List ||
+            raw['correctIndex'] is! int ||
+            raw['explanation'] is! String) {
+          throw const FormatException('Cấu trúc câu hỏi không hợp lệ.');
+        }
+        final question = (raw['question'] as String).trim();
+        final rawOptions = raw['options'] as List<dynamic>;
+        if (rawOptions.any((Object? option) => option is! String)) {
+          throw const FormatException('Cấu trúc câu hỏi không hợp lệ.');
+        }
+        final options = rawOptions
+            .cast<String>()
+            .map((String option) => option.trim())
+            .toList();
+        final explanation = (raw['explanation'] as String).trim();
+        final correctIndex = raw['correctIndex'] as int;
+        if (question.isEmpty ||
+            explanation.isEmpty ||
+            options.length != 4 ||
+            options.any((String option) => option.isEmpty) ||
+            options
+                    .map((String option) => option.toLowerCase())
+                    .toSet()
+                    .length !=
+                4 ||
+            correctIndex < 0 ||
+            correctIndex >= options.length) {
+          throw const FormatException('Cấu trúc câu hỏi không hợp lệ.');
+        }
+        return <String, Object?>{
+          'question': question,
+          'options': options,
+          'correctIndex': correctIndex,
+          'explanation': explanation,
+        };
+      }).toList();
+    } on FormatException {
+      throw const AiFailure(
+        'Máy chủ trắc nghiệm trả về dữ liệu không hợp lệ. Thử lại sau.',
+        kind: AiFailureKind.badResponse,
+      );
+    }
+  }
+
+  Future<AiHttpResponse> _request({
+    required String text,
+    required String mode,
+    required String featureName,
+    String? noteId,
+    String? title,
+  }) async {
     final content = text.trim();
     if (content.isEmpty) {
-      throw const AiFailure(
-        'Ghi chú chưa có nội dung để tóm tắt.',
+      throw AiFailure(
+        'Ghi chú chưa có nội dung để tạo $featureName.',
         kind: AiFailureKind.emptyContent,
       );
     }
     final uri = endpoint;
     if (!isDemo && uri == null) {
-      throw const AiFailure(
-        'Chưa cấu hình máy chủ tóm tắt AI. Chạy app với '
-        '--dart-define=AI_SUMMARY_ENDPOINT=<địa chỉ máy chủ tóm tắt>.',
+      throw AiFailure(
+        'Chưa cấu hình máy chủ AI cho $featureName. Chạy app với '
+        '--dart-define=AI_SUMMARY_ENDPOINT=<địa chỉ máy chủ AI>.',
         kind: AiFailureKind.notConfigured,
       );
     }
@@ -169,25 +256,26 @@ class AiClient {
         }
       }
       final remaining = timeout - elapsed.elapsed;
-      if (remaining <= Duration.zero) throw TimeoutException('Tóm tắt AI');
-      final response = await _transport
+      if (remaining <= Duration.zero) throw TimeoutException(featureName);
+      return await _transport
           .post(uri!, headers: headers, body: body)
           .timeout(remaining);
-      return _readSummary(response);
     } on TimeoutException {
       throw AiFailure(
-        'Máy chủ tóm tắt phản hồi quá ${timeout.inSeconds} giây. '
+        'Máy chủ AI phản hồi quá ${timeout.inSeconds} giây. '
         'Kiểm tra mạng rồi thử lại.',
         kind: AiFailureKind.timeout,
       );
     } on SocketException {
-      throw const AiFailure(
-        'Không kết nối được máy chủ tóm tắt. Kiểm tra mạng rồi thử lại.',
+      throw AiFailure(
+        'Không kết nối được máy chủ AI cho $featureName. '
+        'Kiểm tra mạng rồi thử lại.',
         kind: AiFailureKind.network,
       );
     } on http.ClientException {
-      throw const AiFailure(
-        'Không kết nối được máy chủ tóm tắt. Kiểm tra mạng rồi thử lại.',
+      throw AiFailure(
+        'Không kết nối được máy chủ AI cho $featureName. '
+        'Kiểm tra mạng rồi thử lại.',
         kind: AiFailureKind.network,
       );
     }
@@ -195,10 +283,7 @@ class AiClient {
 
   /// Đọc nội dung tóm tắt từ phản hồi, đồng thời dịch mã HTTP sang [AiFailure].
   String _readSummary(AiHttpResponse response) {
-    final status = response.statusCode;
-    if (status != 200) {
-      throw AiFailure(_messageForStatus(status), kind: _kindForStatus(status));
-    }
+    _ensureSuccessful(response, featureName: 'tóm tắt');
 
     final summary = _extractText(response.body);
     if (summary == null || summary.isEmpty) {
@@ -208,6 +293,19 @@ class AiClient {
       );
     }
     return summary;
+  }
+
+  void _ensureSuccessful(
+    AiHttpResponse response, {
+    required String featureName,
+  }) {
+    final status = response.statusCode;
+    if (status != 200) {
+      throw AiFailure(
+        _messageForStatus(status, featureName: featureName),
+        kind: _kindForStatus(status),
+      );
+    }
   }
 
   /// Chấp nhận `{"summary": ...}`, `{"content": ...}`, `{"data": {"summary": ...}}`
@@ -261,7 +359,7 @@ class AiClient {
     return AiFailureKind.badResponse;
   }
 
-  String _messageForStatus(int status) {
+  String _messageForStatus(int status, {required String featureName}) {
     if (status == 401 || status == 403) {
       return 'Phiên đăng nhập không hợp lệ hoặc đã hết hạn. '
           'Đăng nhập lại rồi thử lại.';
@@ -270,15 +368,16 @@ class AiClient {
       return 'Đã hết lượt gọi AI. Thử lại sau hoặc báo nhóm trưởng.';
     }
     if (status == 504) {
-      return 'Máy chủ tóm tắt phản hồi quá lâu. Thử lại sau.';
+      return 'Máy chủ $featureName phản hồi quá lâu. Thử lại sau.';
     }
     if (status == 413) {
-      return 'Ghi chú quá dài để tóm tắt. Hãy chia nội dung thành các phần ngắn hơn.';
+      return 'Ghi chú quá dài để tạo $featureName. '
+          'Hãy chia nội dung thành các phần ngắn hơn.';
     }
     if (status >= 500) {
-      return 'Máy chủ tóm tắt đang gặp lỗi. Thử lại sau ít phút.';
+      return 'Máy chủ $featureName đang gặp lỗi. Thử lại sau ít phút.';
     }
-    return 'Máy chủ tóm tắt trả về lỗi (HTTP $status). Thử lại sau.';
+    return 'Máy chủ $featureName trả về lỗi (HTTP $status). Thử lại sau.';
   }
 
   /// Giải phóng kết nối HTTP khi app đóng.
