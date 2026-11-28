@@ -23,6 +23,9 @@ abstract final class SupabaseBootstrap {
   static const String anonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
 
   static bool get isConfigured => url.isNotEmpty && anonKey.isNotEmpty;
+  static const bool useSharedSync = bool.fromEnvironment(
+    'SMARTNOTE_ENABLE_SYNC',
+  );
 
   static SupabaseClient? _client;
 
@@ -35,8 +38,14 @@ abstract final class SupabaseBootstrap {
   /// REST và Realtime. Trả về `null` nếu không cấu hình.
   static Future<SupabaseClient?> initialize({
     Future<String?> Function()? accessToken,
+    String? sharedUrl,
+    String? sharedPublishableKey,
   }) async {
-    if (!isConfigured) {
+    final resolvedUrl = isConfigured ? url : sharedUrl;
+    final resolvedKey = isConfigured ? anonKey : sharedPublishableKey;
+    if ((!isConfigured && !useSharedSync) ||
+        resolvedUrl == null ||
+        resolvedKey == null) {
       return null;
     }
     final existing = _client;
@@ -44,8 +53,8 @@ abstract final class SupabaseBootstrap {
       return existing;
     }
     final supabase = await Supabase.initialize(
-      url: url,
-      publishableKey: anonKey,
+      url: resolvedUrl,
+      publishableKey: resolvedKey,
       accessToken: accessToken,
     );
     _client = supabase.client;

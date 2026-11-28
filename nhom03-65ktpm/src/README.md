@@ -24,6 +24,11 @@ fvm flutter pub get
 fvm flutter run
 ```
 
+Trên Android và iOS, bản clone dùng Firebase Auth của nhóm và Edge Function
+NoteSmart từ `config/shared_client.json`. Chọn thiết bị rồi đăng nhập hoặc đăng
+ký bằng tài khoản thử của bạn. Không cần sao chép file cấu hình Firebase hay đặt
+khóa Gemini để chạy app. File cấu hình chung chỉ chứa thông tin client công khai.
+
 Kiểm thử:
 
 ```bash
@@ -37,6 +42,14 @@ fvm flutter analyze
 ```
 
 ## Cấu hình tính năng cloud
+
+- Ghi chú lưu cục bộ khi chạy mặc định. Để thử đồng bộ bằng cấu hình Supabase
+  chung, chạy `fvm flutter run --dart-define=SMARTNOTE_ENABLE_SYNC=true`.
+  Môi trường đồng bộ cần SQL phiên bản ghi chú và tài khoản Firebase có
+  claim `role=authenticated` theo hướng dẫn bên dưới.
+- Cấu hình Firebase riêng vẫn có thể dùng qua file native hoặc bộ
+  `--dart-define=FIREBASE_…`. Có thể ghi đè Edge Function bằng
+  `AI_SUMMARY_ENDPOINT` và Supabase bằng cặp `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
 
 - [Tóm tắt AI](../docs/tom_tat_ai.md) mô tả cách triển khai Edge Function và cấu hình endpoint.
 - [Đồng bộ ghi chú](../docs/dong_bo_du_lieu.md) mô tả SQL, cấu hình Supabase và cách thử hai thiết bị.

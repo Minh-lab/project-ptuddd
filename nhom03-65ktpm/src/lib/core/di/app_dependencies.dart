@@ -53,6 +53,7 @@ class AppDependencies {
     QueryExecutor? executor,
     AuthRepository? authRepository,
     AiClient? aiClient,
+    String? defaultAiEndpoint,
     SupabaseClient? supabaseClient,
     NotesRemoteDataSource? notesRemote,
   }) {
@@ -60,7 +61,11 @@ class AppDependencies {
     final notesDao = NotesDao(database);
     final resolvedAuth = authRepository ?? _firebaseAuthRepository();
     final resolvedAiClient =
-        aiClient ?? AiClient.fromEnvironment(idTokenProvider: _firebaseIdToken);
+        aiClient ??
+        AiClient.fromEnvironment(
+          idTokenProvider: _firebaseIdToken,
+          defaultEndpoint: defaultAiEndpoint,
+        );
 
     final NotesRemoteDataSource? remote =
         notesRemote ??

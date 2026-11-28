@@ -85,8 +85,13 @@ class AiClient {
   /// Đọc cấu hình từ `--dart-define`; endpoint rỗng nghĩa là chưa cấu hình.
   factory AiClient.fromEnvironment({
     Future<String?> Function()? idTokenProvider,
+    String? defaultEndpoint,
   }) {
-    final raw = configuredEndpoint.trim();
+    final raw =
+        (const bool.hasEnvironment('AI_SUMMARY_ENDPOINT')
+                ? configuredEndpoint
+                : defaultEndpoint ?? '')
+            .trim();
     if (raw == demoEndpoint) {
       return AiClient.demo(idTokenProvider: idTokenProvider);
     }
