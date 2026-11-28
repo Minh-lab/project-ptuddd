@@ -267,6 +267,6 @@ Quy trình bắt buộc cho mỗi màn (không được bỏ bước):
 - [x] Màn đăng nhập/đăng ký theo brand visual + design system trong bộ tham chiếu.
 - [x] Màn danh sách ghi chú theo mockup 02 (lời chào, chip lọc môn, lưới thẻ pastel, lưới/danh sách, 3 trạng thái).
 - [x] Widget test cho component chung.
-- [x] Bottom navigation 4 tab (`AppShell`, mặc định tab Ghi chú) — 3 tab Nhật ký/Thống kê/Cài đặt dùng `ComingSoonPage` tới khi #5/#17 và màn cài đặt được merge. **Chỉ một** thanh điều hướng trong toàn app: trắc nghiệm, đổi lưới/danh sách và đăng xuất là hành động trên AppBar, không lồng `NavigationBar` trong tab.
+- [x] Bottom navigation 4 tab (`AppShell`, mặc định tab Ghi chú) — Nhật ký có tổng kết tuần và danh sách theo ngày; Thống kê/Cài đặt vẫn dùng `ComingSoonPage`. **Chỉ một** thanh điều hướng trong toàn app: trắc nghiệm, đổi lưới/danh sách và đăng xuất là hành động trong vùng công cụ, không lồng `NavigationBar` trong tab.
 - [ ] `SubjectCard`/`ProgressCard`/`StatCard`/BottomSheet helper — chờ #3/#6/#17.
 - [ ] Ảnh màn hình thật của app tham chiếu — cần mở app trên máy thật (xem báo cáo §5.2).
