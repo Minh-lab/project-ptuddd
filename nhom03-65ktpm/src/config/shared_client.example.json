@@ -1,0 +1,12 @@
+{
+  "TEAM_FIREBASE_PROJECT_ID": "smartnote-nhom03-65ktpm",
+  "TEAM_FIREBASE_MESSAGING_SENDER_ID": "47843733820",
+  "TEAM_FIREBASE_ANDROID_APP_ID": "1:47843733820:android:9e79725349275195b46e39",
+  "TEAM_FIREBASE_ANDROID_API_KEY": "",
+  "TEAM_FIREBASE_IOS_APP_ID": "1:47843733820:ios:bb43806cdbae2533b46e39",
+  "TEAM_FIREBASE_IOS_API_KEY": "",
+  "TEAM_FIREBASE_IOS_BUNDLE_ID": "com.smartnote.smartNote",
+  "TEAM_SUPABASE_URL": "https://hxzimpvamyzyqdhkxexl.supabase.co",
+  "TEAM_SUPABASE_PUBLISHABLE_KEY": "",
+  "TEAM_AI_ENDPOINT": "https://hxzimpvamyzyqdhkxexl.supabase.co/functions/v1/summarize-note"
+}

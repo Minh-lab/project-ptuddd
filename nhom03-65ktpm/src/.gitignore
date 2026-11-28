@@ -1,3 +1,4 @@
 .vibecode-backup*/
 .flutter-plugins
 .flutter-plugins-dependencies
+/config/shared_client.json

@@ -21,7 +21,18 @@
 cd nhom03-65ktpm/src
 fvm install
 fvm flutter pub get
-fvm flutter run
+fvm flutter run --dart-define-from-file=config/shared_client.json
+```
+
+Trước khi chạy trên Android hoặc iOS, nhận file `shared_client.json` qua kênh
+riêng của nhóm và đặt ở `src/config/shared_client.json`. Git bỏ qua file thật.
+Repo có `config/shared_client.example.json` để đối chiếu các trường. Sau đó chọn
+thiết bị và đăng nhập bằng tài khoản thử. Khóa Gemini nằm ở Edge Function.
+
+Chạy giao diện mẫu khi chưa nhận file cấu hình:
+
+```bash
+fvm flutter run -t lib/main_preview.dart
 ```
 
 Kiểm thử:
@@ -37,6 +48,14 @@ fvm flutter analyze
 ```
 
 ## Cấu hình tính năng cloud
+
+- Ghi chú lưu cục bộ khi chạy mặc định. Để thử đồng bộ bằng cấu hình Supabase
+  chung, thêm `--dart-define=SMARTNOTE_ENABLE_SYNC=true` vào lệnh chạy có file.
+  Môi trường đồng bộ cần SQL phiên bản ghi chú và tài khoản Firebase có
+  claim `role=authenticated` theo hướng dẫn bên dưới.
+- Cấu hình Firebase riêng vẫn có thể dùng qua file native hoặc bộ
+  `--dart-define=FIREBASE_…`. Có thể ghi đè Edge Function bằng
+  `AI_SUMMARY_ENDPOINT` và Supabase bằng cặp `SUPABASE_URL`, `SUPABASE_ANON_KEY`.
 
 - [Tóm tắt AI](../docs/tom_tat_ai.md) mô tả cách triển khai Edge Function và cấu hình endpoint.
 - [Đồng bộ ghi chú](../docs/dong_bo_du_lieu.md) mô tả SQL, cấu hình Supabase và cách thử hai thiết bị.

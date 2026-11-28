@@ -27,10 +27,9 @@ class FirebaseConfigErrorPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Thêm android/app/google-services.json (do flutterfire '
-                    'configure sinh ra) hoặc chạy app kèm các --dart-define '
-                    'FIREBASE_API_KEY, FIREBASE_APP_ID, '
-                    'FIREBASE_MESSAGING_SENDER_ID, FIREBASE_PROJECT_ID.',
+                    'Nhận file config/shared_client.json từ nhóm và chạy '
+                    'Flutter với --dart-define-from-file=config/shared_client.json. '
+                    'Nếu dùng Firebase riêng, xem hướng dẫn trong README.',
                   ),
                   const SizedBox(height: 12),
                   Text(detail),
