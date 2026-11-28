@@ -15,15 +15,22 @@ import '../../features/notes/data/datasources/remote/supabase_notes_remote_data_
 import '../../features/notes/data/repositories/note_repository_impl.dart';
 import '../../features/notes/data/repositories/synced_note_repository.dart';
 import '../../features/notes/domain/repositories/note_repository.dart';
+import '../../features/reminders/data/datasources/local/local_reminder_notifications.dart';
+import '../../features/reminders/data/datasources/local/reminder_notifications_data_source.dart';
+import '../../features/reminders/data/repositories/reminder_repository_impl.dart';
+import '../../features/reminders/domain/repositories/reminder_note_source.dart';
+import '../../features/reminders/domain/repositories/reminder_repository.dart';
 import '../../features/summary/data/datasources/remote/ai_summary_remote_data_source.dart';
 import '../../features/summary/data/repositories/summary_repository_impl.dart';
 import '../../features/summary/domain/repositories/summary_repository.dart';
 import '../database/app_database.dart';
 import '../database/notes_dao.dart';
 import '../database/quiz_scores_dao.dart';
+import '../database/reminders_dao.dart';
 import '../error/failure.dart';
 import '../services/ai_client.dart';
 import '../sync/sync_status.dart';
+import 'reminder_note_adapter.dart';
 
 /// Nơi duy nhất khởi tạo database và repository.
 ///
@@ -43,6 +50,10 @@ class AppDependencies {
     required this.syncedNotes,
     required this.accountDatabases,
     required this.syncSession,
+    required this.reminderRepository,
+    required this.reminderNotes,
+    required this.reminderNotifications,
+    required this.reminderSession,
   });
 
   /// [supabaseClient] chỉ khác `null` khi app được chạy kèm
@@ -55,6 +66,7 @@ class AppDependencies {
     AiClient? aiClient,
     SupabaseClient? supabaseClient,
     NotesRemoteDataSource? notesRemote,
+    ReminderNotificationsDataSource? reminderNotifications,
   }) {
     final database = AppDatabase(executor);
     final notesDao = NotesDao(database);
@@ -88,13 +100,26 @@ class AppDependencies {
             monitor: syncMonitor,
           );
 
+    final NoteRepository noteRepository =
+        syncedNotes ?? NoteRepositoryImpl(notesDao);
+    final notifications = reminderNotifications ?? LocalReminderNotifications();
+    final reminderNotes = ReminderNoteAdapter(noteRepository);
+    // Nhắc nhở (#10) dùng cùng database với ghi chú của tài khoản hiện tại.
+    final reminderRepository = ReminderRepositoryImpl(
+      dao: () => RemindersDao(
+        remote == null ? database : databaseFor(resolvedAuth.currentUser?.id),
+      ),
+      notifications: notifications,
+      notes: reminderNotes,
+    );
+
     return AppDependencies._(
       () => QuizScoresDao(
         remote == null ? database : databaseFor(resolvedAuth.currentUser?.id),
       ),
       database: database,
       notesDao: notesDao,
-      noteRepository: syncedNotes ?? NoteRepositoryImpl(notesDao),
+      noteRepository: noteRepository,
       authRepository: resolvedAuth,
       aiClient: resolvedAiClient,
       summaryRepository: SummaryRepositoryImpl(
@@ -108,6 +133,15 @@ class AppDependencies {
           : resolvedAuth.authStateChanges().listen((_) {
               unawaited(syncedNotes.start());
             }),
+      reminderRepository: reminderRepository,
+      reminderNotes: reminderNotes,
+      reminderNotifications: notifications,
+      // Mở app hoặc đổi tài khoản thì lên lịch lại thông báo của tài khoản đó.
+      reminderSession: notifications.isSupported
+          ? resolvedAuth.authStateChanges().listen((_) {
+              unawaited(reminderRepository.rescheduleAll());
+            })
+          : null,
     );
   }
 
@@ -159,9 +193,20 @@ class AppDependencies {
   final Map<String, AppDatabase> accountDatabases;
   final StreamSubscription<AppUser?>? syncSession;
 
+  /// Nhắc nhở học tập (#10).
+  final ReminderRepository reminderRepository;
+  final ReminderNoteSource reminderNotes;
+  final ReminderNotificationsDataSource reminderNotifications;
+  final StreamSubscription<AppUser?>? reminderSession;
+
+  /// Id ghi chú cần mở khi người dùng bấm vào thông báo nhắc nhở.
+  Stream<String> get noteOpenRequests => reminderNotifications.openedNoteIds;
+
   Future<void> dispose() async {
     aiClient.close();
     await syncSession?.cancel();
+    await reminderSession?.cancel();
+    await reminderNotifications.dispose();
     await syncedNotes?.dispose();
     for (final cache in accountDatabases.values) {
       await cache.close();
