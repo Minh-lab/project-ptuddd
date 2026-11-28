@@ -35,12 +35,16 @@ class _QuizPageState extends State<QuizPage> {
   List<QuizQuestion> _questions = <QuizQuestion>[];
   final Map<int, int> _answers = <int, int>{};
   bool _submitted = false;
+  bool _submitting = false;
   bool _generating = false;
   int _generationId = 0;
   String? _generationError;
   String? _submissionError;
   String? _historyError;
   List<QuizScoreRow> _history = <QuizScoreRow>[];
+
+  bool get _usesLocalQuestions =>
+      widget.aiClient.isDemo || !widget.aiClient.isConfigured;
 
   @override
   void initState() {
@@ -140,7 +144,7 @@ class _QuizPageState extends State<QuizPage> {
 
     setState(() => _generating = true);
     try {
-      final questions = widget.aiClient.isDemo
+      final questions = _usesLocalQuestions
           ? _generateDemoQuestions(note)
           : (await widget.aiClient.generateQuiz(
               text: note.content,
@@ -180,6 +184,8 @@ class _QuizPageState extends State<QuizPage> {
   }
 
   Future<void> _submit(Note note) async {
+    if (_submitting || _submitted) return;
+    setState(() => _submitting = true);
     final correct = _questions.indexed.where((entry) {
       final index = entry.$1;
       final question = entry.$2;
@@ -208,6 +214,8 @@ class _QuizPageState extends State<QuizPage> {
       if (mounted) {
         setState(() => _submissionError = 'Không lưu được điểm: $error');
       }
+    } finally {
+      if (mounted) setState(() => _submitting = false);
     }
   }
 
@@ -229,33 +237,40 @@ class _QuizPageState extends State<QuizPage> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: <Widget>[
-              DropdownButtonFormField<String>(
-                initialValue: _selectedNoteId,
-                decoration: const InputDecoration(
-                  labelText: 'Chọn ghi chú để tạo đề',
-                  border: OutlineInputBorder(),
-                ),
-                items: notes
-                    .map(
-                      (Note item) => DropdownMenuItem<String>(
-                        value: item.id,
-                        child: Text(
-                          item.displayTitle,
-                          overflow: TextOverflow.ellipsis,
+              Material(
+                type: MaterialType.transparency,
+                child: DropdownButtonFormField<String>(
+                  initialValue: _selectedNoteId,
+                  decoration: const InputDecoration(
+                    labelText: 'Chọn ghi chú để tạo đề',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: notes
+                      .map(
+                        (Note item) => DropdownMenuItem<String>(
+                          value: item.id,
+                          child: Text(
+                            item.displayTitle,
+                            overflow: TextOverflow.ellipsis,
+                          ),
                         ),
-                      ),
-                    )
-                    .toList(),
-                onChanged: (String? id) {
-                  if (id == null) return;
-                  final selected = notes.firstWhere((item) => item.id == id);
-                  unawaited(_selectNote(selected));
-                },
+                      )
+                      .toList(),
+                  onChanged: _submitting
+                      ? null
+                      : (String? id) {
+                          if (id == null) return;
+                          final selected = notes.firstWhere(
+                            (item) => item.id == id,
+                          );
+                          unawaited(_selectNote(selected));
+                        },
+                ),
               ),
-              if (widget.aiClient.isDemo)
+              if (_usesLocalQuestions)
                 const Padding(
                   padding: EdgeInsets.only(top: 8),
-                  child: Text('Chế độ xem trước: câu hỏi mẫu tạo tại máy.'),
+                  child: Text('Câu hỏi được tạo trên thiết bị.'),
                 ),
               const SizedBox(height: 16),
               if (_generating) ...<Widget>[
@@ -288,7 +303,7 @@ class _QuizPageState extends State<QuizPage> {
                         ),
                         RadioGroup<int>(
                           groupValue: _answers[i],
-                          onChanged: _submitted
+                          onChanged: _submitted || _submitting
                               ? (_) {}
                               : (int? value) => setState(() {
                                   if (value != null) _answers[i] = value;
@@ -343,6 +358,7 @@ class _QuizPageState extends State<QuizPage> {
                 FilledButton(
                   onPressed:
                       _submitted ||
+                          _submitting ||
                           _answers.length != _questions.length ||
                           note == null
                       ? null
