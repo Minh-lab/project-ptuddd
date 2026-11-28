@@ -1,7 +1,7 @@
-# Tóm tắt AI (#12) — thiết kế, cấu hình và kiểm thử
+# AI ghi chú (#12, #13) — tóm tắt và trắc nghiệm
 
-Tài liệu cho tính năng **tóm tắt ghi chú bằng AI** (ngắn / dài / gạch ý chính).
-Cập nhật ngày 27/11/2026.
+Tài liệu cho tính năng **tóm tắt ghi chú** và **tạo câu hỏi trắc nghiệm** từ
+nội dung ghi chú. API key Gemini chỉ nằm trên máy chủ.
 
 ## 1. Nguyên tắc bảo mật
 
@@ -21,7 +21,7 @@ lib/
 ├── core/
 │   ├── error/failure.dart              # AiFailure + AiFailureKind
 │   └── services/
-│       ├── ai_client.dart              # HTTP client gọi endpoint tóm tắt
+│       ├── ai_client.dart              # HTTP client gọi endpoint AI
 │       └── demo_ai_transport.dart      # tóm tắt cục bộ để demo (không phải AI)
 └── features/summary/
     ├── domain/
@@ -77,11 +77,15 @@ Authorization: Bearer <Firebase ID token>   # có khi đã đăng nhập
   "noteId": "note-uuid",
   "title": "Giải tích – Chương 3",
   "text": "Nội dung ghi chú…",
-  "mode": "short"          // short | long | bullets
+  "mode": "short"          // short | long | bullets | quiz
 }
 ```
 
-### Response
+Với `mode: "quiz"`, app chỉ gửi nội dung khi ghi chú có ít nhất 20 từ. Máy chủ
+trả từ 5 đến 10 câu; mỗi câu phải có bốn phương án khác nhau, `correctIndex`
+trong khoảng 0–3 và lời giải thích.
+
+### Response tóm tắt
 
 HTTP 200, chấp nhận một trong các dạng sau (client đọc linh hoạt):
 
@@ -98,6 +102,25 @@ HTTP 200, chấp nhận một trong các dạng sau (client đọc linh hoạt):
 ```
 
 Hoặc văn bản thuần (không phải JSON).
+
+### Response trắc nghiệm
+
+```json
+{
+  "quiz": [
+    {
+      "question": "Định luật nào mô tả hiện tượng cảm ứng điện từ?",
+      "options": ["Faraday", "Newton", "Ohm", "Hooke"],
+      "correctIndex": 0,
+      "explanation": "Định luật Faraday mô tả suất điện động cảm ứng."
+    }
+  ],
+  "model": "gemini-3.5-flash-lite"
+}
+```
+
+Máy chủ từ chối phản hồi không phải JSON hoặc không đáp ứng số lượng/cấu trúc
+câu hỏi, thay vì hiển thị đề sai. Điểm và lịch sử làm bài được lưu cục bộ.
 
 ### Mã lỗi
 
@@ -165,9 +188,9 @@ các yêu cầu ra ngoài sau 12,5 giây. Lỗi hết hạn mức ở máy chủ
    ```
 
 4. Chạy Flutter với `AI_SUMMARY_ENDPOINT=https://hxzimpvamyzyqdhkxexl.supabase.co/functions/v1/summarize-note`.
-   Kiểm tra đủ ba chế độ bằng tài khoản thử đã đăng nhập Firebase và đo thời
-   gian thật trên thiết bị. Kiểm tra 429 bằng môi trường thử hoặc test tự động,
-   tránh tiêu hết quota của nhóm trên môi trường dùng chung.
+   Kiểm tra ba chế độ tóm tắt và `quiz` bằng tài khoản thử đã đăng nhập Firebase.
+   Kiểm tra 429 bằng môi trường thử hoặc test tự động, tránh tiêu hết quota của
+   nhóm trên môi trường dùng chung.
 
 Chạy `deno check supabase/functions/summarize-note/index.ts` và
 `deno test supabase/functions/summarize-note/handler_test.ts` để kiểm tra hợp đồng

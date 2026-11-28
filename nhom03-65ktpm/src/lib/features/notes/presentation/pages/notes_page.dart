@@ -390,6 +390,7 @@ class _NotesPageState extends State<NotesPage> {
         builder: (_) => QuizPage(
           notesCubit: cubit,
           scoresDao: widget.dependencies.quizScoresDao,
+          aiClient: widget.dependencies.aiClient,
         ),
       ),
     );

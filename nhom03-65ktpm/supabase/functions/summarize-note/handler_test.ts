@@ -69,6 +69,95 @@ Deno.test("returns HTTP 429 for both user and Gemini quota", async () => {
   );
 });
 
+Deno.test("generates valid AI quizzes with 5 or 10 questions", async () => {
+  for (const count of [5, 10]) {
+    const questions = Array.from({ length: count }, (_, index) => ({
+      question: `Câu hỏi ${index + 1}`,
+      options: ["A", "B", "C", "D"],
+      correctIndex: index % 4,
+      explanation: "Giải thích dựa trên nội dung ghi chú.",
+    }));
+    const handle = createHandler({
+      ...dependencies,
+      generate: () => Promise.resolve(JSON.stringify({ quiz: questions })),
+    });
+    const response = await handle(request("quiz"));
+    const payload = await response.json();
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(payload.quiz, questions);
+    assert.equal(payload.model, "test-model");
+  }
+});
+
+Deno.test("rejects quiz output outside the 5–10 question range", async () => {
+  for (const count of [4, 11]) {
+    const invalid = createHandler({
+      ...dependencies,
+      generate: () =>
+        Promise.resolve(JSON.stringify({
+          quiz: Array.from({ length: count }, (_, index) => ({
+            question: `Câu hỏi ${index + 1}`,
+            options: ["A", "B", "C", "D"],
+            correctIndex: 0,
+            explanation: "Lời giải.",
+          })),
+        })),
+    });
+    assert.equal((await invalid(request("quiz"))).status, 502);
+  }
+});
+
+Deno.test("rejects malformed AI quiz output", async () => {
+  const invalidQuizzes = [
+    [{
+      question: "Thiếu phương án",
+      options: ["A", "B"],
+      correctIndex: 0,
+      explanation: "Không đủ dữ kiện.",
+    }],
+    [
+      {
+        question: "Phương án trùng",
+        options: ["A", "A", "C", "D"],
+        correctIndex: 0,
+        explanation: "Không đủ dữ kiện.",
+      },
+      ...Array.from({ length: 4 }, (_, index) => ({
+        question: `Câu ${index}`,
+        options: ["A", "B", "C", "D"],
+        correctIndex: 0,
+        explanation: "Lời giải.",
+      })),
+    ],
+    [
+      {
+        question: "Đáp án ngoài phạm vi",
+        options: ["A", "B", "C", "D"],
+        correctIndex: 4,
+        explanation: "Không đủ dữ kiện.",
+      },
+      ...Array.from({ length: 4 }, (_, index) => ({
+        question: `Câu ${index}`,
+        options: ["A", "B", "C", "D"],
+        correctIndex: 0,
+        explanation: "Lời giải.",
+      })),
+    ],
+  ];
+
+  for (const quiz of invalidQuizzes) {
+    const invalid = createHandler({
+      ...dependencies,
+      generate: () => Promise.resolve(JSON.stringify({ quiz })),
+    });
+    const response = await invalid(request("quiz"));
+
+    assert.equal(response.status, 502);
+    assert.deepEqual(await response.json(), { error: "invalid_quiz" });
+  }
+});
+
 Deno.test("maps timeout and an empty Gemini result", async () => {
   const slow = createHandler({
     ...dependencies,

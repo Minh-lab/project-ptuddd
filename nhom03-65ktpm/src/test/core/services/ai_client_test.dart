@@ -264,6 +264,96 @@ void main() {
     });
   });
 
+  group('AiClient.generateQuiz', () {
+    test('gửi mode quiz và đọc câu hỏi, đáp án, giải thích', () async {
+      late String sentBody;
+      final questions = List<Map<String, Object?>>.generate(
+        5,
+        (int index) => <String, Object?>{
+          'question': 'Câu ${index + 1}',
+          'options': <String>['A', 'B', 'C', 'D'],
+          'correctIndex': 1,
+          'explanation': 'Giải thích',
+        },
+      );
+      final client = _client((_, _, String body) async {
+        sentBody = body;
+        return AiHttpResponse(
+          statusCode: 200,
+          body: jsonEncode(<String, Object?>{'quiz': questions}),
+        );
+      });
+
+      final result = await client.generateQuiz(
+        text: 'Nội dung đủ dài',
+        noteId: 'note-1',
+        title: 'Sinh học',
+      );
+
+      expect(result, hasLength(5));
+      expect(result.first['explanation'], 'Giải thích');
+      final payload = jsonDecode(sentBody) as Map<String, dynamic>;
+      expect(payload['mode'], 'quiz');
+      expect(payload['noteId'], 'note-1');
+      expect(payload['title'], 'Sinh học');
+    });
+
+    test('từ chối phản hồi thiếu câu hỏi hoặc đáp án hợp lệ', () async {
+      final shortListClient = _client(
+        (_, _, _) async => AiHttpResponse(
+          statusCode: 200,
+          body: jsonEncode(<String, Object?>{'quiz': <Object?>[]}),
+        ),
+      );
+      final invalidOptionsClient = _client(
+        (_, _, _) async => AiHttpResponse(
+          statusCode: 200,
+          body: jsonEncode(<String, Object?>{
+            'quiz': List<Map<String, Object?>>.generate(
+              5,
+              (int index) => <String, Object?>{
+                'question': 'Câu $index',
+                'options': <String>['A', 'A', 'C', 'D'],
+                'correctIndex': 0,
+                'explanation': 'Giải thích',
+              },
+            ),
+          }),
+        ),
+      );
+
+      await expectLater(
+        shortListClient.generateQuiz(text: 'Nội dung', noteId: '1', title: 'T'),
+        _failsWith(AiFailureKind.badResponse),
+      );
+      await expectLater(
+        invalidOptionsClient.generateQuiz(
+          text: 'Nội dung',
+          noteId: '1',
+          title: 'T',
+        ),
+        _failsWith(AiFailureKind.badResponse),
+      );
+    });
+
+    test('hiển thị lỗi máy chủ đúng tên tính năng trắc nghiệm', () async {
+      final client = _client(
+        (_, _, _) async => const AiHttpResponse(statusCode: 500, body: ''),
+      );
+
+      await expectLater(
+        client.generateQuiz(text: 'Nội dung', noteId: '1', title: 'T'),
+        throwsA(
+          isA<AiFailure>().having(
+            (AiFailure failure) => failure.message,
+            'message',
+            contains('Máy chủ trắc nghiệm'),
+          ),
+        ),
+      );
+    });
+  });
+
   group('AiClient.demo', () {
     test('tóm tắt cục bộ theo ba kiểu, không cần mạng', () async {
       final client = AiClient.demo();
