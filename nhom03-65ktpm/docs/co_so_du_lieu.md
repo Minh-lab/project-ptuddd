@@ -247,6 +247,7 @@ Các bảng còn lại viết policy theo cùng mẫu khi làm issue tương ứ
 |---|---|---|
 | `notes` | `Notes` (`lib/core/database/tables.dart`) | Thiếu `user_id`, `tags` lưu dạng text phân tách bằng dấu phẩy |
 | `subjects` | chưa có | Bổ sung khi làm #6 |
+| `reminders` | `Reminders` (`lib/core/database/tables.dart`) | #10: hiện **chỉ lưu trên máy**, chưa đồng bộ — thông báo do từng máy tự lên lịch, và bảng Supabase chưa có cột kiểu lặp. Drift thêm `repeat_rule` (`once`/`daily`/`weekly`) và `weekdays` (thứ 1–7, phân tách bằng dấu phẩy); xoá nhắc nhở là xoá hẳn |
 | — | `synced_at` (dự kiến) | Thời điểm đồng bộ gần nhất để biết bản nào mới |
 
 Quy tắc đồng bộ: ghi Supabase trước → cập nhật Drift; khi mất mạng thì ghi Drift và đánh dấu chờ đồng bộ.
@@ -276,3 +277,4 @@ Quy tắc đồng bộ: ghi Supabase trước → cập nhật Drift; khi mất 
 | 21/11/2026 | Tạo file; chốt `notes`, `subjects`, RLS theo Firebase UID; đề xuất các bảng còn lại |
 | 21/11/2026 | Bỏ cột trạng thái và phân công; viết cấu trúc field cơ bản cho toàn bộ bảng, thành viên tự bổ sung khi làm |
 | 21/11/2026 | Tạo project Supabase `NoteSmart` (`hxzimpvamyzyqdhkxexl`); chạy `docs/sql/20261121_tao_bang_co_ban.sql` — 11 bảng, 12 index, RLS + policy cho tất cả bảng |
+| 28/11/2026 | #10: thêm bảng Drift `Reminders` (schema version 3, migration tạo bảng khi nâng cấp); chưa thay đổi bảng `reminders` trên Supabase |

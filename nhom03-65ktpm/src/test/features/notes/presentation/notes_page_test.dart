@@ -46,6 +46,17 @@ void main() {
         tags: const <String>['Nhật ký'],
       ),
     );
+    await dependencies.noteRepository.createNote(
+      Note(
+        id: 'note-3',
+        title: 'Vật lý – Điện từ',
+        content: 'Định luật Faraday.',
+        kind: NoteKind.note,
+        createdAt: now,
+        updatedAt: now,
+        tags: const <String>['Vật lý'],
+      ),
+    );
     await dependencies.quizScoresDao.insertScore(
       QuizScoresCompanion.insert(
         id: 'score-1',
@@ -112,6 +123,7 @@ void main() {
 
     expect(find.text('Giải tích – Chương 3'), findsOneWidget);
     expect(find.text('Nhật ký hôm nay'), findsNothing);
+    expect(find.text('Vật lý – Điện từ'), findsNothing);
     expect(find.text('1/2 ghi chú phù hợp'), findsOneWidget);
 
     await disposePage(tester);

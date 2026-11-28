@@ -27,16 +27,22 @@ class NoteEditorPage extends StatefulWidget {
   State<NoteEditorPage> createState() => _NoteEditorPageState();
 }
 
-class _NoteEditorPageState extends State<NoteEditorPage> {
+class _NoteEditorPageState extends State<NoteEditorPage>
+    with WidgetsBindingObserver {
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
   Timer? _saveTimer;
+  Future<bool>? _activeSave;
   Note? _note;
   bool _saving = false;
+  bool _dirty = false;
+  bool _popRequested = false;
+  String? _saveError;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _note = widget.note;
     if (_note?.isDiary ?? widget.initialKind == NoteKind.diary) {
       final now = DateTime.now();
@@ -55,42 +61,112 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _saveTimer?.cancel();
     _titleController.dispose();
     _contentController.dispose();
     super.dispose();
   }
 
-  void _scheduleSave() {
-    _saveTimer?.cancel();
-    setState(() => _saving = true);
-    _saveTimer = Timer(const Duration(milliseconds: 700), _save);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached) {
+      unawaited(_flushPendingChanges());
+    }
   }
 
-  Future<void> _save() async {
-    if (!mounted) return;
+  void _scheduleSave() {
+    _saveTimer?.cancel();
+    _dirty = true;
+    _saveError = null;
+    setState(() => _saving = true);
+    _saveTimer = Timer(const Duration(milliseconds: 700), () {
+      unawaited(_save());
+    });
+  }
+
+  Future<bool> _save() {
+    _saveTimer?.cancel();
+    final activeSave = _activeSave;
+    if (activeSave != null) return activeSave;
+    if (!_dirty) return Future<bool>.value(true);
+
+    final save = _performSave();
+    _activeSave = save;
+    return save.whenComplete(() {
+      if (identical(_activeSave, save)) _activeSave = null;
+      if (_dirty && _saveError == null && mounted) {
+        _saveTimer?.cancel();
+        _saveTimer = Timer(const Duration(milliseconds: 700), () {
+          unawaited(_save());
+        });
+      }
+    });
+  }
+
+  Future<bool> _performSave() async {
+    if (!mounted) return false;
+    final title = _titleController.text;
+    final content = _contentController.text;
+    setState(() {
+      _saving = true;
+      _saveError = null;
+    });
     try {
       if (_note == null) {
         _note = await widget.cubit.createNote(
-          title: _titleController.text,
-          content: _contentController.text,
+          title: title,
+          content: content,
           kind: widget.initialKind,
         );
       } else {
-        await widget.cubit.updateNote(
-          _note!,
-          title: _titleController.text,
-          content: _contentController.text,
-        );
+        await widget.cubit.updateNote(_note!, title: title, content: content);
         _note = _note!.copyWith(
-          title: _titleController.text,
-          content: _contentController.text,
+          title: title,
+          content: content,
           updatedAt: DateTime.now(),
         );
       }
-      if (mounted) setState(() => _saving = false);
-    } catch (_) {
-      if (mounted) setState(() => _saving = false);
+      if (!mounted) return false;
+      final savedCurrentText =
+          title == _titleController.text && content == _contentController.text;
+      setState(() {
+        _dirty = !savedCurrentText;
+        _saving = _dirty;
+      });
+      return savedCurrentText;
+    } on Object catch (error) {
+      if (mounted) {
+        setState(() {
+          _saving = false;
+          _saveError = '$error';
+        });
+      }
+      return false;
+    }
+  }
+
+  Future<bool> _flushPendingChanges() async {
+    _saveTimer?.cancel();
+    while (_dirty && mounted) {
+      _saveError = null;
+      final saved = await _save();
+      if (!saved && _saveError != null) return false;
+    }
+    return !_dirty;
+  }
+
+  Future<void> _saveThenPop() async {
+    if (_popRequested) return;
+    _popRequested = true;
+    try {
+      if (!await _flushPendingChanges() || !mounted) return;
+      await WidgetsBinding.instance.endOfFrame;
+      if (mounted) Navigator.of(context).pop();
+    } finally {
+      _popRequested = false;
     }
   }
 
@@ -105,11 +181,7 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       );
       return;
     }
-    _saveTimer?.cancel();
-    if (_note?.title != _titleController.text ||
-        _note?.content != _contentController.text) {
-      await _save();
-    }
+    if (!await _flushPendingChanges()) return;
     final note = _note;
     if (!mounted || note == null) {
       return;
@@ -126,10 +198,8 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
   }
 
   Future<void> _delete() async {
-    if (_note == null) {
-      Navigator.pop(context);
-      return;
-    }
+    final note = _note;
+    if (note == null) return;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
@@ -148,62 +218,80 @@ class _NoteEditorPageState extends State<NoteEditorPage> {
       ),
     );
     if (confirmed != true) return;
-    await widget.cubit.deleteNote(_note!.id);
+    if (!await _flushPendingChanges()) return;
+    await widget.cubit.deleteNote(note.id);
     if (mounted) Navigator.pop(context);
   }
 
   @override
   Widget build(BuildContext context) {
     final isDiary = _note?.isDiary ?? widget.initialKind == NoteKind.diary;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(isDiary ? 'Nhật ký hằng ngày' : 'Ghi chú'),
-        actions: <Widget>[
-          Text(
-            _saving ? 'Đang lưu...' : 'Đã lưu',
-            style: Theme.of(context).textTheme.labelMedium,
-          ),
-          const SizedBox(width: 8),
-          IconButton(
-            tooltip: 'Tóm tắt AI',
-            icon: const Icon(Icons.auto_awesome_outlined),
-            onPressed: _openSummary,
-          ),
-          IconButton(
-            tooltip: 'Xoá',
-            icon: const Icon(Icons.delete_outline),
-            onPressed: _delete,
-          ),
-        ],
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: <Widget>[
-            TextField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: 'Tiêu đề',
-                border: OutlineInputBorder(),
-              ),
-              textInputAction: TextInputAction.next,
+    return PopScope<void>(
+      canPop: !_dirty && !_saving,
+      onPopInvokedWithResult: (bool didPop, void result) {
+        if (!didPop) unawaited(_saveThenPop());
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(isDiary ? 'Nhật ký hằng ngày' : 'Ghi chú'),
+          actions: <Widget>[
+            Text(
+              _saving ? 'Đang lưu...' : 'Đã lưu',
+              style: Theme.of(context).textTheme.labelMedium,
             ),
-            const SizedBox(height: 12),
-            Expanded(
-              child: TextField(
-                controller: _contentController,
+            const SizedBox(width: 8),
+            IconButton(
+              tooltip: 'Tóm tắt AI',
+              icon: const Icon(Icons.auto_awesome_outlined),
+              onPressed: _openSummary,
+            ),
+            if (_note != null)
+              IconButton(
+                tooltip: 'Xoá',
+                icon: const Icon(Icons.delete_outline),
+                onPressed: _delete,
+              ),
+          ],
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            children: <Widget>[
+              if (_saveError != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    'Không lưu được: $_saveError',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                  ),
+                ),
+              TextField(
+                controller: _titleController,
                 decoration: const InputDecoration(
-                  labelText: 'Nội dung',
-                  alignLabelWithHint: true,
+                  labelText: 'Tiêu đề',
                   border: OutlineInputBorder(),
                 ),
-                keyboardType: TextInputType.multiline,
-                expands: true,
-                maxLines: null,
-                textAlignVertical: TextAlignVertical.top,
+                textInputAction: TextInputAction.next,
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              Expanded(
+                child: TextField(
+                  controller: _contentController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nội dung',
+                    alignLabelWithHint: true,
+                    border: OutlineInputBorder(),
+                  ),
+                  keyboardType: TextInputType.multiline,
+                  expands: true,
+                  maxLines: null,
+                  textAlignVertical: TextAlignVertical.top,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

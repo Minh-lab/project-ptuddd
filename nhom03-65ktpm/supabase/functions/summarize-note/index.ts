@@ -1,5 +1,5 @@
 import { decodeProtectedHeader, importX509, jwtVerify } from "npm:jose@6.2.18";
-import { createHandler, RequestError } from "./handler.ts";
+import { createHandler, type Mode, RequestError } from "./handler.ts";
 
 const certUrl =
   "https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com";
@@ -11,6 +11,32 @@ const geminiKey = geminiSecretName
 const model = Deno.env.get("GEMINI_MODEL") ?? "gemini-3.5-flash-lite";
 const supabaseUrl = Deno.env.get("SUPABASE_URL");
 const serverKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+const quizSchema = {
+  type: "object",
+  required: ["quiz"],
+  properties: {
+    quiz: {
+      type: "array",
+      minItems: 5,
+      maxItems: 5,
+      items: {
+        type: "object",
+        required: ["question", "options", "correctIndex", "explanation"],
+        properties: {
+          question: { type: "string" },
+          options: {
+            type: "array",
+            minItems: 4,
+            maxItems: 4,
+            items: { type: "string" },
+          },
+          correctIndex: { type: "integer", minimum: 0, maximum: 3 },
+          explanation: { type: "string" },
+        },
+      },
+    },
+  },
+};
 
 let certs: { expires: number; values: Record<string, string> } | undefined;
 let certRequest: Promise<NonNullable<typeof certs>> | undefined;
@@ -96,6 +122,7 @@ async function generate(
   instruction: string,
   note: string,
   signal: AbortSignal,
+  mode: Mode,
 ): Promise<string> {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${
@@ -110,7 +137,13 @@ async function generate(
       body: JSON.stringify({
         systemInstruction: { parts: [{ text: instruction }] },
         contents: [{ role: "user", parts: [{ text: note }] }],
-        generationConfig: { maxOutputTokens: 3000 },
+        generationConfig: mode === "quiz"
+          ? {
+            maxOutputTokens: 3000,
+            responseMimeType: "application/json",
+            responseJsonSchema: quizSchema,
+          }
+          : { maxOutputTokens: 3000 },
       }),
       signal,
     },
