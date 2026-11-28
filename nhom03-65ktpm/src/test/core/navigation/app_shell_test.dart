@@ -100,6 +100,21 @@ void main() {
     await disposeShell(tester);
   });
 
+  testWidgets('Tab Thống kê mở màn streak và thống kê tuần (#17)', (
+    WidgetTester tester,
+  ) async {
+    await pumpShell(tester);
+
+    await tester.tap(find.text('Thống kê').last);
+    await tester.pumpAndSettle();
+
+    expect(tester.widget<IndexedStack>(find.byType(IndexedStack)).index, 2);
+    expect(find.text('ngày học liên tiếp'), findsOneWidget);
+    expect(find.text('Ghi chú theo tuần'), findsOneWidget);
+
+    await disposeShell(tester);
+  });
+
   testWidgets(
     'Tab Cài đặt cũng là màn giữ chỗ, quay lại Ghi chú vẫn giữ dữ liệu',
     (WidgetTester tester) async {

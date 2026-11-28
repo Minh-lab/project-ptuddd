@@ -267,6 +267,7 @@ Quy trình bắt buộc cho mỗi màn (không được bỏ bước):
 - [x] Màn đăng nhập/đăng ký theo brand visual + design system trong bộ tham chiếu.
 - [x] Màn danh sách ghi chú theo mockup 02 (lời chào, chip lọc môn, lưới thẻ pastel, lưới/danh sách, 3 trạng thái).
 - [x] Widget test cho component chung.
-- [x] Bottom navigation 4 tab (`AppShell`, mặc định tab Ghi chú) — 3 tab Nhật ký/Thống kê/Cài đặt dùng `ComingSoonPage` tới khi #5/#17 và màn cài đặt được merge. **Chỉ một** thanh điều hướng trong toàn app: trắc nghiệm, đổi lưới/danh sách và đăng xuất là hành động trên AppBar, không lồng `NavigationBar` trong tab.
+- [x] Bottom navigation 4 tab (`AppShell`, mặc định tab Ghi chú) — tab Thống kê đã có màn thật (#17); 2 tab Nhật ký/Cài đặt dùng `ComingSoonPage` tới khi #5 và màn cài đặt được merge. **Chỉ một** thanh điều hướng trong toàn app: trắc nghiệm, đổi lưới/danh sách và đăng xuất là hành động trên AppBar, không lồng `NavigationBar` trong tab.
 - [ ] `SubjectCard`/`ProgressCard`/`StatCard`/BottomSheet helper — chờ #3/#6/#17.
+- [x] Màn Thống kê (#17) theo mẫu Duolingo: thẻ streak (số ngày liên tiếp, kỷ lục, trạng thái hôm nay có biểu tượng + chữ, dải 7 ngày), 3 ô số liệu, biểu đồ cột ghi chú theo tuần (chuyển tuần, so với tuần trước) và 8 tuần gần nhất. Biểu đồ một chuỗi màu `primary` (đạt 4,5:1 nền sáng, 6,9:1 nền tối), cột ≤ 24dp bo 4dp đầu cột, chỉ ghi số trên cột cao nhất; số từng cột xem bằng chạm (tooltip), trình đọc màn hình hoặc nút "Xem dạng bảng". Ngày học = ngày có ít nhất một ghi chú/nhật ký mới (theo `createdAt`, không dùng `updatedAt` vì bị ghi đè khi sửa).
 - [ ] Ảnh màn hình thật của app tham chiếu — cần mở app trên máy thật (xem báo cáo §5.2).
