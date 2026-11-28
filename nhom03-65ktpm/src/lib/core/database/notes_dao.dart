@@ -62,6 +62,21 @@ class NotesDao extends DatabaseAccessor<AppDatabase> with _$NotesDaoMixin {
     return affected > 0;
   }
 
+  Future<bool> updateClassification(String id, NotesCompanion row) {
+    return transaction(() async {
+      final current = await findById(id);
+      if (current == null || current.deletedAt != null) return false;
+      return updateNote(
+        id,
+        row.copyWith(
+          updatedAt: Value(
+            nextLocalWriteTime(current.updatedAt, DateTime.now()),
+          ),
+        ),
+      );
+    });
+  }
+
   /// Xoá mềm để không mất dữ liệu khi đồng bộ với Supabase.
   Future<bool> softDeleteNote(String id, {DateTime? at}) {
     final now = at ?? DateTime.now();

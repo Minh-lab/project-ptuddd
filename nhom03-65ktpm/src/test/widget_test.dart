@@ -30,6 +30,13 @@ void main() {
     expect(find.text('Đăng nhập để đồng bộ ghi chú của bạn'), findsNothing);
     expect(find.text('Chưa có ghi chú nào'), findsOneWidget);
 
+    await tester.tap(find.text('Theo chủ đề'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey<String>('open-classification')),
+      findsOneWidget,
+    );
+
     // Gỡ widget để BlocProvider đóng cubit (huỷ subscription) rồi đóng
     // database, tránh lỗi "Timer is still pending" khi test kết thúc.
     await tester.pumpWidget(const SizedBox.shrink());

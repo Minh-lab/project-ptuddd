@@ -246,7 +246,7 @@ Các bảng còn lại viết policy theo cùng mẫu khi làm issue tương ứ
 | Supabase | Drift | Ghi chú |
 |---|---|---|
 | `notes` | `Notes` (`lib/core/database/tables.dart`) | Thiếu `user_id`, `tags` lưu dạng text phân tách bằng dấu phẩy |
-| `subjects` | chưa có | Bổ sung khi làm #6 |
+| `subjects` | `Subjects` (`lib/core/database/tables.dart`) | Thiếu `user_id`; xoá mềm bằng `deletedAt`, xoá môn thì `Notes.subjectId` về `null` (giống `on delete set null`) |
 | — | `synced_at` (dự kiến) | Thời điểm đồng bộ gần nhất để biết bản nào mới |
 
 Quy tắc đồng bộ: ghi Supabase trước → cập nhật Drift; khi mất mạng thì ghi Drift và đánh dấu chờ đồng bộ.
@@ -276,3 +276,4 @@ Quy tắc đồng bộ: ghi Supabase trước → cập nhật Drift; khi mất 
 | 21/11/2026 | Tạo file; chốt `notes`, `subjects`, RLS theo Firebase UID; đề xuất các bảng còn lại |
 | 21/11/2026 | Bỏ cột trạng thái và phân công; viết cấu trúc field cơ bản cho toàn bộ bảng, thành viên tự bổ sung khi làm |
 | 21/11/2026 | Tạo project Supabase `NoteSmart` (`hxzimpvamyzyqdhkxexl`); chạy `docs/sql/20261121_tao_bang_co_ban.sql` — 11 bảng, 12 index, RLS + policy cho tất cả bảng |
+| 26/11/2026 | #6: thêm bảng Drift `Subjects` (schema version 3, migration tạo bảng khi nâng cấp); tag vẫn lưu trong `notes.tags`, không thêm bảng mới |

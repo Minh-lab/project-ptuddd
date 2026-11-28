@@ -41,19 +41,6 @@ class NotesCubit extends Cubit<NotesState> {
   Future<void> load() async {
     emit(state.copyWith(status: NotesStatus.loading, errorMessage: null));
     await _subscription?.cancel();
-    try {
-      await ensureDiaryForDate(DateTime.now());
-    } on Object catch (error) {
-      if (!isClosed) {
-        emit(
-          state.copyWith(
-            status: NotesStatus.failure,
-            errorMessage: error is Failure ? error.message : '$error',
-          ),
-        );
-      }
-      return;
-    }
     if (isClosed) return;
     _subscription = _repository.watchNotes().listen(
       (List<Note> notes) {
@@ -74,6 +61,12 @@ class NotesCubit extends Cubit<NotesState> {
         );
       },
     );
+    try {
+      await ensureDiaryForDate(_clock());
+    } on Object {
+      // The diary screen can retry and display its own errors. Existing
+      // notes should remain available while today's diary sync is pending.
+    }
   }
 
   Future<Note> createNote({

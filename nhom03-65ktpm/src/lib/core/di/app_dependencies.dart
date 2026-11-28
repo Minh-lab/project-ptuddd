@@ -15,12 +15,18 @@ import '../../features/notes/data/datasources/remote/supabase_notes_remote_data_
 import '../../features/notes/data/repositories/note_repository_impl.dart';
 import '../../features/notes/data/repositories/synced_note_repository.dart';
 import '../../features/notes/domain/repositories/note_repository.dart';
+import '../../features/subjects/data/repositories/note_classification_repository_impl.dart';
+import '../../features/subjects/data/repositories/subject_repository_impl.dart';
+import '../../features/subjects/data/repositories/supabase_subject_sync.dart';
+import '../../features/subjects/domain/repositories/note_classification_repository.dart';
+import '../../features/subjects/domain/repositories/subject_repository.dart';
 import '../../features/summary/data/datasources/remote/ai_summary_remote_data_source.dart';
 import '../../features/summary/data/repositories/summary_repository_impl.dart';
 import '../../features/summary/domain/repositories/summary_repository.dart';
 import '../database/app_database.dart';
 import '../database/notes_dao.dart';
 import '../database/quiz_scores_dao.dart';
+import '../database/subjects_dao.dart';
 import '../error/failure.dart';
 import '../services/ai_client.dart';
 import '../sync/sync_status.dart';
@@ -32,7 +38,7 @@ import '../sync/sync_status.dart';
 /// là bản giả để không cần Firebase, và [aiClient] là bản giả để không gọi mạng.
 class AppDependencies {
   AppDependencies._(
-    this._quizScoresDao, {
+    this._activeNotesDatabase, {
     required this.database,
     required this.notesDao,
     required this.noteRepository,
@@ -86,12 +92,16 @@ class AppDependencies {
             remote: remote,
             currentUserId: () => resolvedAuth.currentUser?.id,
             monitor: syncMonitor,
+            prepareSubjects: supabaseClient == null
+                ? null
+                : (uid) =>
+                      SupabaseSubjectSync(supabaseClient)
+                          .reconcile(uid, SubjectsDao(databaseFor(uid))),
           );
 
     return AppDependencies._(
-      () => QuizScoresDao(
-        remote == null ? database : databaseFor(resolvedAuth.currentUser?.id),
-      ),
+      () =>
+          remote == null ? database : databaseFor(resolvedAuth.currentUser?.id),
       database: database,
       notesDao: notesDao,
       noteRepository: syncedNotes ?? NoteRepositoryImpl(notesDao),
@@ -145,8 +155,24 @@ class AppDependencies {
   final NotesDao notesDao;
   final NoteRepository noteRepository;
   final AuthRepository authRepository;
-  final QuizScoresDao Function() _quizScoresDao;
-  QuizScoresDao get quizScoresDao => _quizScoresDao();
+  final AppDatabase Function() _activeNotesDatabase;
+  QuizScoresDao get quizScoresDao => QuizScoresDao(_activeNotesDatabase());
+  SubjectRepository get subjectRepository {
+    final uid = authRepository.currentUser?.id;
+    return SubjectRepositoryImpl(
+      SubjectsDao(_activeNotesDatabase()),
+      onChanged: () => syncedNotes?.refreshForUser(uid),
+    );
+  }
+
+  NoteClassificationRepository get noteClassificationRepository {
+    final uid = authRepository.currentUser?.id;
+    return NoteClassificationRepositoryImpl(
+      NotesDao(_activeNotesDatabase()),
+      onChanged: () => syncedNotes?.refreshForUser(uid),
+    );
+  }
+
   final AiClient aiClient;
   final SummaryRepository summaryRepository;
 

@@ -13,7 +13,10 @@ class WordExportService {
   final Directory? destination;
   final DateTime Function() _clock;
 
-  Future<String> exportNotes(List<Note> notes) async {
+  Future<String> exportNotes(
+    List<Note> notes, {
+    Map<String, String> subjectNames = const {},
+  }) async {
     if (notes.isEmpty) throw Exception('Chưa chọn ghi chú');
 
     final now = _clock();
@@ -21,7 +24,9 @@ class WordExportService {
     archive
       ..addFile(_textFile('[Content_Types].xml', _contentTypesXml))
       ..addFile(_textFile('_rels/.rels', _rootRelsXml))
-      ..addFile(_textFile('word/document.xml', _documentXml(notes, now)));
+      ..addFile(
+        _textFile('word/document.xml', _documentXml(notes, now, subjectNames)),
+      );
 
     final bytes = ZipEncoder().encode(archive);
     final directory = destination ?? await _defaultDirectory();
@@ -41,13 +46,17 @@ class WordExportService {
     return getApplicationDocumentsDirectory();
   }
 
-  String _documentXml(List<Note> notes, DateTime exportedAt) {
+  String _documentXml(
+    List<Note> notes,
+    DateTime exportedAt,
+    Map<String, String> subjectNames,
+  ) {
     final paragraphs = <String>[
       _paragraph('SMARTNOTE - GHI CHÚ ĐÃ XUẤT', bold: true, size: '32'),
       _paragraph('Ngày xuất: ${_formatDate(exportedAt)}'),
     ];
     for (final note in notes) {
-      final subject = note.subjectId?.trim();
+      final subject = subjectNames[note.subjectId]?.trim();
       final subjectName = subject != null && subject.isNotEmpty
           ? subject
           : note.tags.isNotEmpty

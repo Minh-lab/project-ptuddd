@@ -478,7 +478,15 @@ class _NotesPageState extends State<NotesPage> {
       return;
     }
     try {
-      final path = await WordExportService().exportNotes(selected);
+      final subjects = await widget.dependencies.subjectRepository
+          .watchSubjects()
+          .first;
+      final path = await WordExportService().exportNotes(
+        selected,
+        subjectNames: {
+          for (final subject in subjects) subject.id: subject.name,
+        },
+      );
       if (!mounted) {
         return;
       }

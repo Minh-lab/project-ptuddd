@@ -31,11 +31,15 @@ void main() {
         kind: NoteKind.note,
         createdAt: DateTime(2026, 11, 25),
         updatedAt: DateTime(2026, 11, 27),
-        subjectId: 'Vật lý',
+        subjectId: 'fa94bfe1-d5be-42a1-99da-de481ceaa885',
+        tags: const <String>['Cảm ứng'],
       ),
     ];
 
-    final path = await service.exportNotes(notes);
+    final path = await service.exportNotes(
+      notes,
+      subjectNames: {'fa94bfe1-d5be-42a1-99da-de481ceaa885': 'Vật lý'},
+    );
     final archive = ZipDecoder().decodeBytes(await File(path).readAsBytes());
     final document = utf8
         .decode(archive.findFile('word/document.xml')!.content as List<int>)
@@ -47,6 +51,7 @@ void main() {
     expect(document, contains('Ngày: 26/11/2026'));
     expect(document, contains('Nội dung tiếng Việt &lt;đúng dấu&gt;.'));
     expect(document, contains('Môn học: Vật lý'));
+    expect(document, isNot(contains('fa94bfe1-d5be-42a1-99da-de481ceaa885')));
     expect(document, contains('Ngày: 25/11/2026'));
   });
 }
