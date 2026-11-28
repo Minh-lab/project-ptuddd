@@ -5,8 +5,12 @@ import 'package:smart_note/core/services/shared_client_config.dart';
 void main() {
   test('đọc cấu hình client theo nền tảng khi có file riêng', () {
     const config = SharedClientConfig();
-    final android = config.firebaseOptionsFor(TargetPlatform.android);
-    final ios = config.firebaseOptionsFor(TargetPlatform.iOS);
+    final android = config.firebaseOptionsFor(
+      TargetPlatform.android,
+      web: false,
+    );
+    final ios = config.firebaseOptionsFor(TargetPlatform.iOS, web: false);
+    final web = config.firebaseOptionsFor(TargetPlatform.iOS, web: true);
 
     if (const String.fromEnvironment('TEAM_FIREBASE_ANDROID_API_KEY').isEmpty) {
       expect(android, isNull);
@@ -26,6 +30,14 @@ void main() {
         Uri.parse(config.aiEndpoint).origin,
         Uri.parse(config.supabaseUrl).origin,
       );
+    }
+    if (const String.fromEnvironment('TEAM_FIREBASE_WEB_API_KEY').isEmpty) {
+      expect(web, isNull);
+    } else {
+      expect(web?.appId, contains(':web:'));
+      expect(web?.projectId, 'smartnote-nhom03-65ktpm');
+      expect(web?.authDomain, 'smartnote-nhom03-65ktpm.firebaseapp.com');
+      expect(web?.iosBundleId, isNull);
     }
   });
 }

@@ -12,7 +12,16 @@ part 'app_database.g.dart';
 class AppDatabase extends _$AppDatabase {
   /// [executor] chỉ dùng cho test (ví dụ `NativeDatabase.memory()`).
   AppDatabase([QueryExecutor? executor, String databaseName = 'smart_note'])
-    : super(executor ?? driftDatabase(name: databaseName));
+    : super(
+        executor ??
+            driftDatabase(
+              name: databaseName,
+              web: DriftWebOptions(
+                sqlite3Wasm: Uri.parse('sqlite3.wasm'),
+                driftWorker: Uri.parse('drift_worker.js'),
+              ),
+            ),
+      );
 
   @override
   int get schemaVersion => 2;

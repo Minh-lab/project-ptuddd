@@ -24,10 +24,21 @@ fvm flutter pub get
 fvm flutter run --dart-define-from-file=config/shared_client.json
 ```
 
-Trước khi chạy trên Android hoặc iOS, nhận file `shared_client.json` qua kênh
+Trước khi chạy trên Android, iOS hoặc Web, nhận file `shared_client.json` qua kênh
 riêng của nhóm và đặt ở `src/config/shared_client.json`. Git bỏ qua file thật.
 Repo có `config/shared_client.example.json` để đối chiếu các trường. Sau đó chọn
 thiết bị và đăng nhập bằng tài khoản thử. Khóa Gemini nằm ở Edge Function.
+
+Khi chọn Chrome, dùng phiên bản file riêng có các trường `TEAM_FIREBASE_WEB_…`.
+`google-services.json` chỉ dành cho Android.
+
+```bash
+fvm flutter run -d chrome --dart-define-from-file=config/shared_client.json
+```
+
+SQLite trên Web dùng `web/sqlite3.wasm` và `web/drift_worker.js` cùng phiên bản
+Drift khóa trong `pubspec.lock`. Khi nâng Drift, cập nhật hai tệp từ cùng bản
+phát hành trên [GitHub của Drift](https://github.com/simolus3/drift/releases).
 
 Chạy giao diện mẫu khi chưa nhận file cấu hình:
 

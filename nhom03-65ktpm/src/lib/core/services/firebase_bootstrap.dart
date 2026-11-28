@@ -1,4 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 /// Khởi tạo Firebase cho app.
@@ -53,6 +54,13 @@ class FirebaseBootstrap {
     final options = optionsFromEnvironment();
     if (options != null) {
       await Firebase.initializeApp(options: options);
+      return;
+    }
+    if (kIsWeb) {
+      if (sharedOptions == null) {
+        throw FirebaseException(plugin: 'core', code: 'missing-web-config');
+      }
+      await Firebase.initializeApp(options: sharedOptions);
       return;
     }
     try {
