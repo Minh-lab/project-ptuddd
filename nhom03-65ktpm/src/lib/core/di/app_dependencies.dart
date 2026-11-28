@@ -17,6 +17,7 @@ import '../../features/notes/data/repositories/synced_note_repository.dart';
 import '../../features/notes/domain/repositories/note_repository.dart';
 import '../../features/subjects/data/repositories/note_classification_repository_impl.dart';
 import '../../features/subjects/data/repositories/subject_repository_impl.dart';
+import '../../features/subjects/data/repositories/supabase_subject_sync.dart';
 import '../../features/subjects/domain/repositories/note_classification_repository.dart';
 import '../../features/subjects/domain/repositories/subject_repository.dart';
 import '../../features/summary/data/datasources/remote/ai_summary_remote_data_source.dart';
@@ -91,6 +92,11 @@ class AppDependencies {
             remote: remote,
             currentUserId: () => resolvedAuth.currentUser?.id,
             monitor: syncMonitor,
+            prepareSubjects: supabaseClient == null
+                ? null
+                : (uid) =>
+                      SupabaseSubjectSync(supabaseClient)
+                          .reconcile(uid, SubjectsDao(databaseFor(uid))),
           );
 
     return AppDependencies._(
@@ -151,10 +157,22 @@ class AppDependencies {
   final AuthRepository authRepository;
   final AppDatabase Function() _activeNotesDatabase;
   QuizScoresDao get quizScoresDao => QuizScoresDao(_activeNotesDatabase());
-  SubjectRepository get subjectRepository =>
-      SubjectRepositoryImpl(SubjectsDao(_activeNotesDatabase()));
-  NoteClassificationRepository get noteClassificationRepository =>
-      NoteClassificationRepositoryImpl(NotesDao(_activeNotesDatabase()));
+  SubjectRepository get subjectRepository {
+    final uid = authRepository.currentUser?.id;
+    return SubjectRepositoryImpl(
+      SubjectsDao(_activeNotesDatabase()),
+      onChanged: () => syncedNotes?.refreshForUser(uid),
+    );
+  }
+
+  NoteClassificationRepository get noteClassificationRepository {
+    final uid = authRepository.currentUser?.id;
+    return NoteClassificationRepositoryImpl(
+      NotesDao(_activeNotesDatabase()),
+      onChanged: () => syncedNotes?.refreshForUser(uid),
+    );
+  }
+
   final AiClient aiClient;
   final SummaryRepository summaryRepository;
 

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:uuid/uuid.dart';
 
 import '../../../../core/error/failure.dart';
 import '../../domain/entities/classified_note.dart';
@@ -37,7 +38,7 @@ class SubjectsCubit extends Cubit<SubjectsState> {
     final now = DateTime.now();
     return _subjects.createSubject(
       Subject(
-        id: '${now.microsecondsSinceEpoch}-${now.hashCode}',
+        id: const Uuid().v4(),
         name: ClassificationRules.validateSubjectName(name, state.subjects),
         color: color,
         createdAt: now,

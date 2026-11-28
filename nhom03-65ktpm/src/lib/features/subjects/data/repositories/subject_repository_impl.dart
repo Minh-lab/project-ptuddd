@@ -7,12 +7,14 @@ import '../models/subject_mapper.dart';
 
 /// Hiện thực [SubjectRepository] trên cache cục bộ (Drift).
 class SubjectRepositoryImpl implements SubjectRepository {
-  SubjectRepositoryImpl(this._dao);
+  SubjectRepositoryImpl(this._dao, {this.onChanged});
 
   final SubjectsDao _dao;
+  final void Function()? onChanged;
 
   @override
   Stream<List<Subject>> watchSubjects() {
+    onChanged?.call();
     return _dao.watchAll().map(
       (List<SubjectRow> rows) =>
           rows.map((SubjectRow row) => row.toEntity()).toList(),
@@ -23,6 +25,7 @@ class SubjectRepositoryImpl implements SubjectRepository {
   Future<void> createSubject(Subject subject) async {
     try {
       await _dao.insertSubject(subject.toCompanion());
+      onChanged?.call();
     } on Object catch (error) {
       throw DatabaseFailure('Không tạo được môn học: $error');
     }
@@ -38,6 +41,7 @@ class SubjectRepositoryImpl implements SubjectRepository {
       if (!updated) {
         throw const DatabaseFailure('Không tìm thấy môn học để cập nhật');
       }
+      onChanged?.call();
     } on Failure {
       rethrow;
     } on Object catch (error) {
@@ -52,6 +56,7 @@ class SubjectRepositoryImpl implements SubjectRepository {
       if (!deleted) {
         throw const DatabaseFailure('Không tìm thấy môn học để xoá');
       }
+      onChanged?.call();
     } on Failure {
       rethrow;
     } on Object catch (error) {
