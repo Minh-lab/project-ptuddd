@@ -3,7 +3,10 @@ import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../data/repositories/ocr_repository_impl.dart';
 import '../../domain/entities/scanned_image.dart';
+import '../../domain/repositories/ocr_note_saver.dart';
+import '../../domain/repositories/ocr_repository.dart';
 import '../../domain/repositories/scan_repository.dart';
 import '../../domain/usecases/capture_image_usecase.dart';
 import '../../domain/usecases/crop_image_usecase.dart';
@@ -11,12 +14,21 @@ import '../../domain/usecases/pick_image_usecase.dart';
 import '../bloc/scan_cubit.dart';
 import '../bloc/scan_state.dart';
 import 'crop_page.dart';
+import 'ocr_result_page.dart';
 
 /// Màn hình chính của tính năng Quét vở: Chụp ảnh, chọn ảnh và điều hướng cắt ảnh.
 class ScanPage extends StatelessWidget {
-  const ScanPage({required this.scanRepository, this.initialImage, super.key});
+  const ScanPage({
+    required this.scanRepository,
+    this.ocrRepository,
+    this.ocrNoteSaver,
+    this.initialImage,
+    super.key,
+  });
 
   final ScanRepository scanRepository;
+  final OcrRepository? ocrRepository;
+  final OcrNoteSaver? ocrNoteSaver;
   final ScannedImage? initialImage;
 
   @override
@@ -28,13 +40,19 @@ class ScanPage extends StatelessWidget {
         cropImageUseCase: CropImageUseCase(scanRepository),
         initialImage: initialImage,
       ),
-      child: const _ScanPageView(),
+      child: _ScanPageView(
+        ocrRepository: ocrRepository,
+        ocrNoteSaver: ocrNoteSaver,
+      ),
     );
   }
 }
 
 class _ScanPageView extends StatelessWidget {
-  const _ScanPageView();
+  const _ScanPageView({this.ocrRepository, this.ocrNoteSaver});
+
+  final OcrRepository? ocrRepository;
+  final OcrNoteSaver? ocrNoteSaver;
 
   Future<void> _openCropPage(BuildContext context, ScannedImage image) async {
     final croppedBytes = await Navigator.of(context).push<Uint8List>(
@@ -110,10 +128,26 @@ class _ScanPageView extends StatelessWidget {
             image: image,
             onCrop: () => _openCropPage(context, image),
             onPickAnother: () => _showSourceDialog(context),
+            onContinueOcr: () => _openOcrPage(context, image),
           );
         },
       ),
     );
+  }
+
+  Future<void> _openOcrPage(BuildContext context, ScannedImage image) async {
+    final saved = await Navigator.of(context).push<bool>(
+      MaterialPageRoute<bool>(
+        builder: (_) => OcrResultPage(
+          image: image,
+          ocrRepository: ocrRepository ?? OcrRepositoryImpl(),
+          noteSaver: ocrNoteSaver,
+        ),
+      ),
+    );
+    if (saved == true && context.mounted) {
+      Navigator.of(context).pop();
+    }
   }
 
   void _showPermissionDeniedDialog(BuildContext context, String message) {
@@ -250,11 +284,13 @@ class _PreviewScanView extends StatelessWidget {
     required this.image,
     required this.onCrop,
     required this.onPickAnother,
+    required this.onContinueOcr,
   });
 
   final ScannedImage image;
   final VoidCallback onCrop;
   final VoidCallback onPickAnother;
+  final VoidCallback onContinueOcr;
 
   @override
   Widget build(BuildContext context) {
@@ -323,16 +359,7 @@ class _PreviewScanView extends StatelessWidget {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton.icon(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                          'Sẵn sàng cho tính năng OCR nhận dạng chữ (#9)',
-                        ),
-                        duration: Duration(seconds: 2),
-                      ),
-                    );
-                  },
+                  onPressed: onContinueOcr,
                   icon: const Icon(Icons.arrow_forward),
                   label: const Text('Tiếp tục OCR'),
                   style: FilledButton.styleFrom(

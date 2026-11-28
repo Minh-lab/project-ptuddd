@@ -6,11 +6,16 @@ import '../../features/auth/data/repositories/auth_repository_impl.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/notes/data/repositories/note_repository_impl.dart';
 import '../../features/notes/domain/repositories/note_repository.dart';
+import '../../features/scan/data/repositories/ocr_repository_impl.dart';
 import '../../features/scan/data/repositories/scan_repository_impl.dart';
+import '../../features/scan/domain/repositories/ocr_note_saver.dart';
+import '../../features/scan/domain/repositories/ocr_repository.dart';
 import '../../features/scan/domain/repositories/scan_repository.dart';
 import '../database/app_database.dart';
+import '../database/note_attachments_dao.dart';
 import '../database/notes_dao.dart';
 import '../database/quiz_scores_dao.dart';
+import 'ocr_note_saver_impl.dart';
 
 /// Nơi duy nhất khởi tạo database và repository.
 ///
@@ -21,9 +26,12 @@ class AppDependencies {
   AppDependencies._({
     required this.database,
     required this.notesDao,
+    required this.noteAttachmentsDao,
     required this.noteRepository,
     required this.authRepository,
     required this.scanRepository,
+    required this.ocrRepository,
+    required this.ocrNoteSaver,
     required this.quizScoresDao,
   });
 
@@ -31,16 +39,25 @@ class AppDependencies {
     QueryExecutor? executor,
     AuthRepository? authRepository,
     ScanRepository? scanRepository,
+    OcrRepository? ocrRepository,
   }) {
     final database = AppDatabase(executor);
     final notesDao = NotesDao(database);
+    final noteAttachmentsDao = NoteAttachmentsDao(database);
+    final noteRepository = NoteRepositoryImpl(notesDao);
     final quizScoresDao = QuizScoresDao(database);
     return AppDependencies._(
       database: database,
       notesDao: notesDao,
-      noteRepository: NoteRepositoryImpl(notesDao),
+      noteAttachmentsDao: noteAttachmentsDao,
+      noteRepository: noteRepository,
       authRepository: authRepository ?? _firebaseAuthRepository(),
       scanRepository: scanRepository ?? ScanRepositoryImpl(),
+      ocrRepository: ocrRepository ?? OcrRepositoryImpl(),
+      ocrNoteSaver: OcrNoteSaverImpl(
+        noteRepository: noteRepository,
+        noteAttachmentsDao: noteAttachmentsDao,
+      ),
       quizScoresDao: quizScoresDao,
     );
   }
@@ -53,9 +70,12 @@ class AppDependencies {
 
   final AppDatabase database;
   final NotesDao notesDao;
+  final NoteAttachmentsDao noteAttachmentsDao;
   final NoteRepository noteRepository;
   final AuthRepository authRepository;
   final ScanRepository scanRepository;
+  final OcrRepository ocrRepository;
+  final OcrNoteSaver ocrNoteSaver;
   final QuizScoresDao quizScoresDao;
 
   Future<void> dispose() => database.close();

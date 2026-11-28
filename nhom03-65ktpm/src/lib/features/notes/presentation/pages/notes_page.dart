@@ -47,9 +47,7 @@ class _NotesPageState extends State<NotesPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          _selectedIds.isEmpty
-              ? 'SmartNote'
-              : '${_selectedIds.length} đã chọn',
+          _selectedIds.isEmpty ? 'SmartNote' : '${_selectedIds.length} đã chọn',
         ),
         actions: <Widget>[
           ...(_selectedIds.isEmpty
@@ -60,8 +58,14 @@ class _NotesPageState extends State<NotesPage> {
                     onSelected: (value) => setState(() => _filter = value),
                     itemBuilder: (_) => const <PopupMenuEntry<NoteKind?>>[
                       PopupMenuItem(value: null, child: Text('Tất cả')),
-                      PopupMenuItem(value: NoteKind.note, child: Text('Ghi chú')),
-                      PopupMenuItem(value: NoteKind.diary, child: Text('Nhật ký')),
+                      PopupMenuItem(
+                        value: NoteKind.note,
+                        child: Text('Ghi chú'),
+                      ),
+                      PopupMenuItem(
+                        value: NoteKind.diary,
+                        child: Text('Nhật ký'),
+                      ),
                     ],
                   ),
                   ...widget.actions,
@@ -171,7 +175,11 @@ class _NotesPageState extends State<NotesPage> {
             onPressed: () {
               Navigator.of(context).push<void>(
                 MaterialPageRoute<void>(
-                  builder: (_) => ScanPage(scanRepository: scanRepo),
+                  builder: (_) => ScanPage(
+                    scanRepository: scanRepo,
+                    ocrRepository: widget.dependencies.ocrRepository,
+                    ocrNoteSaver: widget.dependencies.ocrNoteSaver,
+                  ),
                 ),
               );
             },
@@ -194,10 +202,7 @@ class _NotesPageState extends State<NotesPage> {
     );
   }
 
-  Future<void> _showCreateSheet(
-    BuildContext context,
-    NotesCubit cubit,
-  ) async {
+  Future<void> _showCreateSheet(BuildContext context, NotesCubit cubit) async {
     final navigator = Navigator.of(context);
     final kind = await showModalBottomSheet<NoteKind>(
       context: context,
@@ -235,15 +240,15 @@ class _NotesPageState extends State<NotesPage> {
     try {
       final path = await WordExportService().exportNotes(selected);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Đã xuất tài liệu Word:\n$path')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Đã xuất tài liệu Word:\n$path')));
       setState(_selectedIds.clear);
     } catch (error) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Không xuất được Word: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Không xuất được Word: $error')));
     }
   }
 }
