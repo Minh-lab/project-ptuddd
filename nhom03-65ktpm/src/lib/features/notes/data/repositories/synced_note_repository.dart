@@ -18,6 +18,7 @@ class SyncedNoteRepository implements NoteRepository {
     required this.remote,
     required this.currentUserId,
     required this.monitor,
+    this.prepareSubjects,
     this.retryDelay = const Duration(seconds: 5),
   });
 
@@ -25,6 +26,7 @@ class SyncedNoteRepository implements NoteRepository {
   final NotesRemoteDataSource remote;
   final String? Function() currentUserId;
   final SyncMonitor monitor;
+  final Future<void> Function(String userId)? prepareSubjects;
   final Duration retryDelay;
 
   StreamSubscription<List<Note>>? _remoteSubscription;
@@ -173,6 +175,15 @@ class SyncedNoteRepository implements NoteRepository {
       }
       monitor.report(SyncStatus.syncing);
       try {
+        final prepare = prepareSubjects;
+        if (prepare != null && note.subjectId != null) {
+          if (!isUuid(note.subjectId)) {
+            await _refresh(userId);
+            return;
+          }
+          await prepare(userId).timeout(const Duration(seconds: 10));
+          if (!_isCurrent(userId)) return;
+        }
         await remote
             .upsertNote(userId, note)
             .timeout(const Duration(seconds: 10));
@@ -193,6 +204,8 @@ class SyncedNoteRepository implements NoteRepository {
     if (!_isCurrent(userId)) return;
     monitor.report(SyncStatus.syncing);
     try {
+      await prepareSubjects?.call(userId).timeout(const Duration(seconds: 10));
+      if (!_isCurrent(userId)) return;
       final remoteNotes = await load(userId)
           .timeout(const Duration(seconds: 10));
       if (!_isCurrent(userId)) return;

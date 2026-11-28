@@ -7,44 +7,65 @@ import 'package:path_provider/path_provider.dart';
 import '../../domain/entities/note.dart';
 
 class WordExportService {
-  Future<String> exportNotes(List<Note> notes) async {
+  WordExportService({this.destination, DateTime Function()? clock})
+    : _clock = clock ?? DateTime.now;
+
+  final Directory? destination;
+  final DateTime Function() _clock;
+
+  Future<String> exportNotes(
+    List<Note> notes, {
+    Map<String, String> subjectNames = const {},
+  }) async {
     if (notes.isEmpty) throw Exception('Chưa chọn ghi chú');
 
+    final now = _clock();
     final archive = Archive();
     archive
-      ..addFile(ArchiveFile('[Content_Types].xml', 0, utf8.encode(_contentTypesXml)))
-      ..addFile(ArchiveFile('_rels/.rels', 0, utf8.encode(_rootRelsXml)))
+      ..addFile(_textFile('[Content_Types].xml', _contentTypesXml))
+      ..addFile(_textFile('_rels/.rels', _rootRelsXml))
       ..addFile(
-        ArchiveFile('word/document.xml', 0, utf8.encode(_documentXml(notes))),
+        _textFile('word/document.xml', _documentXml(notes, now, subjectNames)),
       );
 
     final bytes = ZipEncoder().encode(archive);
-    Directory directory;
-    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-      directory =
-          await getDownloadsDirectory() ??
-          await getApplicationDocumentsDirectory();
-    } else {
-      directory = await getApplicationDocumentsDirectory();
-    }
-    final stamp = DateTime.now().millisecondsSinceEpoch;
+    final directory = destination ?? await _defaultDirectory();
+    await directory.create(recursive: true);
     final file = File(
-      '${directory.path}${Platform.pathSeparator}SmartNote_$stamp.docx',
+      '${directory.path}${Platform.pathSeparator}SmartNote_${now.millisecondsSinceEpoch}.docx',
     );
     await file.writeAsBytes(bytes, flush: true);
     return file.path;
   }
 
-  String _documentXml(List<Note> notes) {
+  Future<Directory> _defaultDirectory() async {
+    if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+      return await getDownloadsDirectory() ??
+          await getApplicationDocumentsDirectory();
+    }
+    return getApplicationDocumentsDirectory();
+  }
+
+  String _documentXml(
+    List<Note> notes,
+    DateTime exportedAt,
+    Map<String, String> subjectNames,
+  ) {
     final paragraphs = <String>[
       _paragraph('SMARTNOTE - GHI CHÚ ĐÃ XUẤT', bold: true, size: '32'),
-      _paragraph(
-        'Ngày xuất: ${DateTime.now().toIso8601String().substring(0, 10)}',
-      ),
+      _paragraph('Ngày xuất: ${_formatDate(exportedAt)}'),
     ];
     for (final note in notes) {
+      final subject = subjectNames[note.subjectId]?.trim();
+      final subjectName = subject != null && subject.isNotEmpty
+          ? subject
+          : note.tags.isNotEmpty
+          ? note.tags.first
+          : 'Chưa phân loại';
       paragraphs
         ..add(_paragraph(note.displayTitle, bold: true, size: '28'))
+        ..add(_paragraph('Môn học: $subjectName'))
+        ..add(_paragraph('Ngày: ${_formatDate(note.createdAt)}'))
         ..addAll(
           note.content
               .split('\n')
@@ -56,6 +77,17 @@ class WordExportService {
 <w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
   <w:body>${paragraphs.join()}<w:sectPr/></w:body>
 </w:document>''';
+  }
+
+  ArchiveFile _textFile(String name, String content) {
+    final bytes = utf8.encode(content);
+    return ArchiveFile(name, bytes.length, bytes);
+  }
+
+  String _formatDate(DateTime value) {
+    final local = value.toLocal();
+    return '${local.day.toString().padLeft(2, '0')}/'
+        '${local.month.toString().padLeft(2, '0')}/${local.year}';
   }
 
   String _paragraph(String text, {bool bold = false, String size = '24'}) {

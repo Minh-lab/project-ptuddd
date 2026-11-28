@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Hiển thị khi Firebase chưa được cấu hình, thay vì để app crash khó hiểu.
@@ -27,10 +28,13 @@ class FirebaseConfigErrorPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Thêm android/app/google-services.json (do flutterfire '
-                    'configure sinh ra) hoặc chạy app kèm các --dart-define '
-                    'FIREBASE_API_KEY, FIREBASE_APP_ID, '
-                    'FIREBASE_MESSAGING_SENDER_ID, FIREBASE_PROJECT_ID.',
+                    kIsWeb
+                        ? 'Nhận bản config/shared_client.json có cấu hình Web '
+                              'từ nhóm, rồi chạy flutter run -d chrome '
+                              '--dart-define-from-file=config/shared_client.json.'
+                        : 'Nhận file config/shared_client.json từ nhóm và chạy '
+                              'Flutter với --dart-define-from-file=config/shared_client.json. '
+                              'Nếu dùng Firebase riêng, xem hướng dẫn trong README.',
                   ),
                   const SizedBox(height: 12),
                   Text(detail),

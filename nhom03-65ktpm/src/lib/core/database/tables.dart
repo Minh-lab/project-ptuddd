@@ -30,6 +30,55 @@ class Notes extends Table {
   Set<Column<Object>> get primaryKey => {id};
 }
 
+/// Nhắc nhở học tập theo ghi chú (#10).
+///
+/// Chỉ lưu trên máy vì thông báo do từng máy tự lên lịch; xem
+/// `docs/co_so_du_lieu.md` mục 7.
+@DataClassName('ReminderRow')
+class Reminders extends Table {
+  TextColumn get id => text()();
+
+  TextColumn get noteId => text()();
+
+  /// `once`, `daily` hoặc `weekly`.
+  TextColumn get repeatRule => text()();
+
+  /// Một lần: ngày giờ báo. Hằng ngày/theo thứ: chỉ dùng giờ và phút.
+  DateTimeColumn get remindAt => dateTime()();
+
+  /// Thứ được báo (1 = thứ Hai … 7 = Chủ nhật), phân tách bằng dấu phẩy.
+  TextColumn get weekdays => text().withDefault(const Constant(''))();
+
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
+/// Môn học dùng để phân loại ghi chú (#6), ánh xạ bảng `subjects` của Supabase.
+///
+/// Ghi chú tham chiếu môn qua `Notes.subjectId`; xoá môn là xoá mềm.
+@DataClassName('SubjectRow')
+class Subjects extends Table {
+  TextColumn get id => text()();
+
+  TextColumn get name => text()();
+
+  /// Màu hiển thị dạng `#RRGGBB`.
+  TextColumn get color => text().nullable()();
+
+  DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
+
+  DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
+
+  DateTimeColumn get deletedAt => dateTime().nullable()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {id};
+}
+
 @DataClassName('QuizScoreRow')
 class QuizScores extends Table {
   TextColumn get id => text()();
