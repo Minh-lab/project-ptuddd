@@ -9,9 +9,10 @@ import '../models/subject_mapper.dart';
 
 /// Hiện thực [NoteClassificationRepository] trên bảng `notes` của Drift.
 class NoteClassificationRepositoryImpl implements NoteClassificationRepository {
-  NoteClassificationRepositoryImpl(this._dao);
+  NoteClassificationRepositoryImpl(this._dao, {this.onChanged});
 
   final NotesDao _dao;
+  final void Function()? onChanged;
 
   @override
   Stream<List<ClassifiedNote>> watchNotes() {
@@ -28,17 +29,17 @@ class NoteClassificationRepositoryImpl implements NoteClassificationRepository {
     required List<String> tags,
   }) async {
     try {
-      final updated = await _dao.updateNote(
+      final updated = await _dao.updateClassification(
         noteId,
         NotesCompanion(
           subjectId: Value<String?>(subjectId),
           tags: Value<String>(tagsToStorage(tags)),
-          updatedAt: Value<DateTime>(DateTime.now()),
         ),
       );
       if (!updated) {
         throw const DatabaseFailure('Không tìm thấy ghi chú để phân loại');
       }
+      onChanged?.call();
     } on Failure {
       rethrow;
     } on Object catch (error) {
@@ -73,19 +74,16 @@ class NoteClassificationRepositoryImpl implements NoteClassificationRepository {
   }) async {
     try {
       await _dao.transaction(() async {
-        final now = DateTime.now();
         for (final row in await _dao.getAll()) {
           final tags = parseStoredTags(row.tags);
           if (!tags.contains(tag)) continue;
-          await _dao.updateNote(
+          await _dao.updateClassification(
             row.id,
-            NotesCompanion(
-              tags: Value<String>(tagsToStorage(rewrite(tags))),
-              updatedAt: Value<DateTime>(now),
-            ),
+            NotesCompanion(tags: Value<String>(tagsToStorage(rewrite(tags)))),
           );
         }
       });
+      onChanged?.call();
     } on Object catch (error) {
       throw DatabaseFailure('Không $action được tag: $error');
     }

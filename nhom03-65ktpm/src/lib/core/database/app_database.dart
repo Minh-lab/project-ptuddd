@@ -5,6 +5,15 @@ import 'tables.dart';
 
 part 'app_database.g.dart';
 
+/// Drift stores DateTime values with second precision.
+DateTime nextLocalWriteTime(DateTime previous, DateTime requested) {
+  final seconds = requested.millisecondsSinceEpoch ~/ 1000;
+  final rounded = DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+  return rounded.isAfter(previous)
+      ? rounded
+      : previous.add(const Duration(seconds: 1));
+}
+
 /// Cơ sở dữ liệu cục bộ (SQLite qua Drift) — cache offline của ứng dụng.
 ///
 /// Nguồn dữ liệu chính là Supabase; Drift giữ bản sao để dùng khi mất mạng.
