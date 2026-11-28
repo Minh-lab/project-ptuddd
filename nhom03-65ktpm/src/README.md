@@ -12,13 +12,13 @@
 
 ## Yêu cầu môi trường
 
-- [FVM](https://fvm.app/) và Flutter 3.24.3 (xem `.fvmrc`)
+- [FVM](https://fvm.app/) và Flutter 3.47.5 (xem `.fvmrc`)
 - Android SDK (nền tảng chính) hoặc Xcode nếu chạy iOS
 
 ## Chạy ứng dụng
 
 ```bash
-cd app
+cd nhom03-65ktpm/src
 fvm install
 fvm flutter pub get
 fvm flutter run
@@ -35,3 +35,10 @@ Kiểm tra mã nguồn:
 ```bash
 fvm flutter analyze
 ```
+
+## Cấu hình tính năng cloud
+
+- [Tóm tắt AI](../docs/tom_tat_ai.md) mô tả cách triển khai Edge Function và cấu hình endpoint.
+- [Đồng bộ ghi chú](../docs/dong_bo_du_lieu.md) mô tả SQL, cấu hình Supabase và cách thử hai thiết bị.
+- Để kiểm tra giao diện tóm tắt trên Android bằng dữ liệu cục bộ, dùng
+  `fvm flutter run --dart-define=AI_SUMMARY_ENDPOINT=mock`.
