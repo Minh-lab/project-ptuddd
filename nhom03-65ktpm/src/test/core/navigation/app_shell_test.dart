@@ -85,7 +85,7 @@ void main() {
     await disposeShell(tester);
   });
 
-  testWidgets('Chuyển sang tab chưa có màn thì thấy trạng thái sắp ra mắt', (
+  testWidgets('Tab Nhật ký có tổng kết tuần và danh sách ngày', (
     WidgetTester tester,
   ) async {
     await pumpShell(tester);
@@ -94,8 +94,9 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(tester.widget<IndexedStack>(find.byType(IndexedStack)).index, 1);
-    expect(find.text('Sắp ra mắt'), findsWidgets);
-    expect(find.text('Tính năng đang được xây dựng'), findsWidgets);
+    expect(find.text('1/7 ngày có nhật ký · 0 từ'), findsOneWidget);
+    expect(find.byTooltip('Tuần trước'), findsOneWidget);
+    expect(find.byTooltip('Chọn ngày'), findsOneWidget);
 
     await disposeShell(tester);
   });

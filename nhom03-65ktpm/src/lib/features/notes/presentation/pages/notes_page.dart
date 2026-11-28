@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/di/app_dependencies.dart';
 import '../../../../core/theme/app_spacing.dart';
@@ -70,17 +71,17 @@ class _NotesPageState extends State<NotesPage> {
     }).toList();
   }
 
-  String _subtitle(NotesState state, int shown) {
+  String _subtitle(NotesState state, int shown, int total) {
     if (state.isLoading || state.status == NotesStatus.failure) {
       return 'Đang đồng bộ ghi chú của bạn';
     }
-    if (state.notes.isEmpty) {
+    if (total == 0) {
       return 'Sẵn sàng cho ghi chú đầu tiên';
     }
     if (_query.trim().isNotEmpty || _selectedTag != null) {
-      return '$shown/${state.notes.length} ghi chú phù hợp';
+      return '$shown/$total ghi chú phù hợp';
     }
-    return '${state.notes.length} ghi chú';
+    return '$total ghi chú';
   }
 
   @override
@@ -90,7 +91,10 @@ class _NotesPageState extends State<NotesPage> {
       data: AppTheme.notes(Theme.of(context)),
       child: BlocBuilder<NotesCubit, NotesState>(
         builder: (context, state) {
-          final filtered = _filter(state.notes);
+          final notes = state.notes
+              .where((Note note) => !note.isDiary)
+              .toList();
+          final filtered = _filter(notes);
           return Scaffold(
             body: SafeArea(
               bottom: false,
@@ -106,10 +110,22 @@ class _NotesPageState extends State<NotesPage> {
                       NotesLayout.gap,
                     ),
                     sliver: SliverToBoxAdapter(
-                      child: _header(context, state, filtered.length, cubit),
+                      child: _header(
+                        context,
+                        state,
+                        filtered.length,
+                        notes.length,
+                        cubit,
+                      ),
                     ),
                   ),
-                  ..._bodySlivers(context, state, filtered, cubit),
+                  ..._bodySlivers(
+                    context,
+                    state,
+                    filtered,
+                    notes.length,
+                    cubit,
+                  ),
                 ],
               ),
             ),
@@ -123,6 +139,7 @@ class _NotesPageState extends State<NotesPage> {
     BuildContext context,
     NotesState state,
     int count,
+    int totalCount,
     NotesCubit cubit,
   ) {
     final theme = Theme.of(context);
@@ -219,7 +236,7 @@ class _NotesPageState extends State<NotesPage> {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  _subtitle(state, count),
+                  _subtitle(state, count, totalCount),
                   textAlign: TextAlign.end,
                   style: theme.textTheme.labelLarge,
                 ),
@@ -279,6 +296,7 @@ class _NotesPageState extends State<NotesPage> {
     BuildContext context,
     NotesState state,
     List<Note> filtered,
+    int totalCount,
     NotesCubit cubit,
   ) {
     final Widget? status = switch (state) {
@@ -287,7 +305,7 @@ class _NotesPageState extends State<NotesPage> {
         message: state.errorMessage ?? 'Đã xảy ra lỗi khi đọc ghi chú.',
         onRetry: cubit.load,
       ),
-      _ when state.notes.isEmpty => EmptyState(
+      _ when totalCount == 0 => EmptyState(
         icon: Icons.sticky_note_2_outlined,
         title: 'Chưa có ghi chú nào',
         message: 'Ghi chú bạn tạo sẽ xuất hiện tại đây.',
@@ -390,6 +408,7 @@ class _NotesPageState extends State<NotesPage> {
         builder: (_) => QuizPage(
           notesCubit: cubit,
           scoresDao: widget.dependencies.quizScoresDao,
+          aiClient: widget.dependencies.aiClient,
         ),
       ),
     );
@@ -397,6 +416,7 @@ class _NotesPageState extends State<NotesPage> {
 
   Future<void> _showCreateSheet(BuildContext context, NotesCubit cubit) async {
     final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final kind = await showModalBottomSheet<NoteKind>(
       context: context,
       builder: (_) => SafeArea(
@@ -420,10 +440,24 @@ class _NotesPageState extends State<NotesPage> {
     if (!mounted || kind == null) {
       return;
     }
+    Note? note;
+    if (kind == NoteKind.diary) {
+      try {
+        note = await cubit.ensureDiaryForDate(DateTime.now());
+      } on Object catch (error) {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(content: Text('Không mở được nhật ký: $error')),
+        );
+        return;
+      }
+    }
+    if (!mounted) return;
     await navigator.push(
       MaterialPageRoute<void>(
         builder: (_) => NoteEditorPage(
           cubit: cubit,
+          note: note,
           initialKind: kind,
           summaryRepository: widget.dependencies.summaryRepository,
           isSummaryDemo: widget.dependencies.aiClient.isDemo,
@@ -448,6 +482,18 @@ class _NotesPageState extends State<NotesPage> {
       if (!mounted) {
         return;
       }
+      await SharePlus.instance.share(
+        ShareParams(
+          subject: 'SmartNote - ${selected.length} ghi chú',
+          files: <XFile>[
+            XFile(
+              path,
+              mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(content: Text('Đã xuất tài liệu Word:\n$path')),
       );

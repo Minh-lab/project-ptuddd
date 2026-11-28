@@ -75,14 +75,14 @@ void main() {
     await pumpPage(tester);
 
     expect(find.text('Ghi chú'), findsWidgets);
-    expect(find.text('2 ghi chú'), findsOneWidget);
+    expect(find.text('1 ghi chú'), findsOneWidget);
     expect(find.text('Theo chủ đề'), findsOneWidget);
     expect(find.widgetWithText(ChoiceChip, 'Tất cả'), findsNothing);
     await tester.tap(find.byTooltip('Bộ lọc và công cụ'));
     await tester.pumpAndSettle();
     expect(find.widgetWithText(ChoiceChip, 'Tất cả'), findsOneWidget);
     expect(find.widgetWithText(ChoiceChip, 'Toán'), findsOneWidget);
-    expect(find.byType(NoteCard), findsNWidgets(2));
+    expect(find.byType(NoteCard), findsOneWidget);
     expect(find.text('Giải tích – Chương 3'), findsOneWidget);
 
     await disposePage(tester);
@@ -100,7 +100,7 @@ void main() {
 
     expect(find.text('Giải tích – Chương 3'), findsOneWidget);
     expect(find.text('Nhật ký hôm nay'), findsNothing);
-    expect(find.text('1/2 ghi chú phù hợp'), findsOneWidget);
+    expect(find.text('1/1 ghi chú phù hợp'), findsOneWidget);
 
     await disposePage(tester);
   });
@@ -141,7 +141,7 @@ void main() {
 
     await tester.tap(find.byTooltip('Huỷ chọn'));
     await tester.pumpAndSettle();
-    expect(find.text('2 ghi chú'), findsOneWidget);
+    expect(find.text('1 ghi chú'), findsOneWidget);
 
     await disposePage(tester);
   });
