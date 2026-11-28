@@ -81,13 +81,26 @@ void main() {
     await cubit.load();
     await tester.pumpWidget(
       MaterialApp(
-        home: QuizPage(
-          notesCubit: cubit,
-          scoresDao: QuizScoresDao(database),
-          aiClient: aiClient,
+        home: Builder(
+          builder: (context) => Scaffold(
+            body: TextButton(
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => QuizPage(
+                    notesCubit: cubit,
+                    scoresDao: QuizScoresDao(database),
+                    aiClient: aiClient,
+                  ),
+                ),
+              ),
+              child: const Text('Mở trắc nghiệm'),
+            ),
+          ),
         ),
       ),
     );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Mở trắc nghiệm'));
     await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButtonFormField<String>));
     await tester.pumpAndSettle();
@@ -100,6 +113,21 @@ void main() {
 
     expect(transport.calls, 0);
     expect(find.textContaining('Ghi chú quá ngắn'), findsOneWidget);
+  });
+
+  testWidgets('tạo câu hỏi trên thiết bị khi thiếu endpoint', (tester) async {
+    aiClient.close();
+    aiClient = AiClient(endpoint: null, transport: transport);
+    await pumpPage(
+      tester,
+      'Định luật Faraday mô tả hiện tượng cảm ứng điện từ trong cuộn dây. '
+      'Từ thông thay đổi sẽ tạo ra suất điện động cảm ứng. '
+      'Chiều dòng điện tuân theo định luật Lenz.',
+    );
+
+    expect(transport.calls, 0);
+    expect(find.text('Câu hỏi được tạo trên thiết bị.'), findsOneWidget);
+    expect(find.textContaining('Điền từ còn thiếu'), findsWidgets);
   });
 
   testWidgets('tạo 5 câu, chấm điểm, hiện giải thích và lưu lịch sử', (
@@ -131,6 +159,7 @@ void main() {
 
     final submit = find.text('Nộp bài và lưu điểm');
     await tester.ensureVisible(submit);
+    await tester.tap(submit);
     await tester.tap(submit);
     await tester.pumpAndSettle();
 

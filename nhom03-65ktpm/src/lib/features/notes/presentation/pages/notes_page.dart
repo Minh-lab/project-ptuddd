@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../../../core/di/app_dependencies.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -55,8 +57,45 @@ class _NotesPageState extends State<NotesPage> {
       .watchCompletedQuizNoteIds();
   String _query = '';
   String? _selectedTag;
+  StreamSubscription<String>? _openRequests;
 
   bool get _selectionMode => _selectedIds.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    // Bấm vào thông báo nhắc nhở (#10) thì mở đúng ghi chú đó.
+    _openRequests = widget.dependencies.noteOpenRequests.listen(_openNoteById);
+  }
+
+  @override
+  void dispose() {
+    unawaited(_openRequests?.cancel());
+    super.dispose();
+  }
+
+  Future<void> _openNoteById(String id) async {
+    final cubit = context.read<NotesCubit>();
+    var state = cubit.state;
+    if (state.status == NotesStatus.initial || state.isLoading) {
+      state = await cubit.stream.firstWhere(
+        (NotesState next) =>
+            next.status != NotesStatus.initial && !next.isLoading,
+      );
+    }
+    if (!mounted) return;
+    final note = state.notes.where((Note note) => note.id == id).firstOrNull;
+    if (note == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ghi chú của nhắc nhở này không còn nữa.'),
+        ),
+      );
+      return;
+    }
+    Navigator.of(context).popUntil((Route<dynamic> route) => route.isFirst);
+    _openEditor(cubit, note);
+  }
 
   List<String> _tags(List<Note> notes) {
     final tags = <String>{};
@@ -88,17 +127,17 @@ class _NotesPageState extends State<NotesPage> {
     }).toList();
   }
 
-  String _subtitle(NotesState state, int shown) {
+  String _subtitle(NotesState state, int shown, int total) {
     if (state.isLoading || state.status == NotesStatus.failure) {
       return 'Đang đồng bộ ghi chú của bạn';
     }
-    if (state.notes.isEmpty) {
+    if (total == 0) {
       return 'Sẵn sàng cho ghi chú đầu tiên';
     }
     if (_query.trim().isNotEmpty || _selectedTag != null) {
-      return '$shown/${state.notes.length} ghi chú phù hợp';
+      return '$shown/$total ghi chú phù hợp';
     }
-    return '${state.notes.length} ghi chú';
+    return '$total ghi chú';
   }
 
   @override
@@ -108,7 +147,10 @@ class _NotesPageState extends State<NotesPage> {
       data: AppTheme.notes(Theme.of(context)),
       child: BlocBuilder<NotesCubit, NotesState>(
         builder: (context, state) {
-          final filtered = _filter(state.notes);
+          final notes = state.notes
+              .where((Note note) => !note.isDiary)
+              .toList();
+          final filtered = _filter(notes);
           return Scaffold(
             body: SafeArea(
               bottom: false,
@@ -124,10 +166,22 @@ class _NotesPageState extends State<NotesPage> {
                       NotesLayout.gap,
                     ),
                     sliver: SliverToBoxAdapter(
-                      child: _header(context, state, filtered.length, cubit),
+                      child: _header(
+                        context,
+                        state,
+                        filtered.length,
+                        notes,
+                        cubit,
+                      ),
                     ),
                   ),
-                  ..._bodySlivers(context, state, filtered, cubit),
+                  ..._bodySlivers(
+                    context,
+                    state,
+                    filtered,
+                    notes.length,
+                    cubit,
+                  ),
                   const SliverToBoxAdapter(
                     child: SizedBox(height: NotesLayout.bottomPadding),
                   ),
@@ -144,11 +198,12 @@ class _NotesPageState extends State<NotesPage> {
     BuildContext context,
     NotesState state,
     int count,
+    List<Note> notes,
     NotesCubit cubit,
   ) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final tags = _tags(state.notes);
+    final tags = _tags(notes);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -204,7 +259,7 @@ class _NotesPageState extends State<NotesPage> {
           const Text('Chọn thêm hoặc xuất tài liệu Word')
         else ...[
           const SizedBox(height: NotesLayout.actionTop),
-          _quickActions(context, state, cubit),
+          _quickActions(context, notes, cubit),
           const SizedBox(height: NotesLayout.topicTop - AppSpacing.sm),
           Row(
             children: [
@@ -252,7 +307,7 @@ class _NotesPageState extends State<NotesPage> {
               const SizedBox(width: AppSpacing.sm),
               Expanded(
                 child: Text(
-                  _subtitle(state, count),
+                  _subtitle(state, count, notes.length),
                   textAlign: TextAlign.end,
                   style: theme.textTheme.bodySmall,
                 ),
@@ -361,7 +416,7 @@ class _NotesPageState extends State<NotesPage> {
 
   Widget _quickActions(
     BuildContext context,
-    NotesState state,
+    List<Note> notes,
     NotesCubit cubit,
   ) {
     final colors = Theme.of(context).brightness == Brightness.dark
@@ -372,12 +427,12 @@ class _NotesPageState extends State<NotesPage> {
       (
         'Ôn tập /\nFlashcard',
         Icons.style_outlined,
-        () => _openNoteAction(context, state.notes, summarize: false),
+        () => _openNoteAction(context, notes, summarize: false),
       ),
       (
         'Tóm tắt\nAI',
         Icons.auto_awesome_outlined,
-        () => _openNoteAction(context, state.notes, summarize: true),
+        () => _openNoteAction(context, notes, summarize: true),
       ),
     ];
     return LayoutBuilder(
@@ -513,6 +568,7 @@ class _NotesPageState extends State<NotesPage> {
     BuildContext context,
     NotesState state,
     List<Note> filtered,
+    int totalCount,
     NotesCubit cubit,
   ) {
     final Widget? status = switch (state) {
@@ -521,7 +577,7 @@ class _NotesPageState extends State<NotesPage> {
         message: state.errorMessage ?? 'Đã xảy ra lỗi khi đọc ghi chú.',
         onRetry: cubit.load,
       ),
-      _ when state.notes.isEmpty => EmptyState(
+      _ when totalCount == 0 => EmptyState(
         icon: Icons.sticky_note_2_outlined,
         title: 'Chưa có ghi chú nào',
         message: 'Ghi chú bạn tạo sẽ xuất hiện tại đây.',
@@ -664,6 +720,7 @@ class _NotesPageState extends State<NotesPage> {
 
   Future<void> _showCreateSheet(BuildContext context, NotesCubit cubit) async {
     final navigator = Navigator.of(context);
+    final messenger = ScaffoldMessenger.of(context);
     final kind = await showModalBottomSheet<NoteKind>(
       context: context,
       builder: (_) => SafeArea(
@@ -687,10 +744,24 @@ class _NotesPageState extends State<NotesPage> {
     if (!mounted || kind == null) {
       return;
     }
+    Note? note;
+    if (kind == NoteKind.diary) {
+      try {
+        note = await cubit.ensureDiaryForDate(DateTime.now());
+      } on Object catch (error) {
+        if (!mounted) return;
+        messenger.showSnackBar(
+          SnackBar(content: Text('Không mở được nhật ký: $error')),
+        );
+        return;
+      }
+    }
+    if (!mounted) return;
     await navigator.push(
       MaterialPageRoute<void>(
         builder: (_) => NoteEditorPage(
           cubit: cubit,
+          note: note,
           initialKind: kind,
           summaryRepository: widget.dependencies.summaryRepository,
           isSummaryDemo: widget.dependencies.aiClient.isDemo,
@@ -711,10 +782,30 @@ class _NotesPageState extends State<NotesPage> {
       return;
     }
     try {
-      final path = await WordExportService().exportNotes(selected);
+      final subjects = await widget.dependencies.subjectRepository
+          .watchSubjects()
+          .first;
+      final path = await WordExportService().exportNotes(
+        selected,
+        subjectNames: {
+          for (final subject in subjects) subject.id: subject.name,
+        },
+      );
       if (!mounted) {
         return;
       }
+      await SharePlus.instance.share(
+        ShareParams(
+          subject: 'SmartNote - ${selected.length} ghi chú',
+          files: <XFile>[
+            XFile(
+              path,
+              mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
       messenger.showSnackBar(
         SnackBar(content: Text('Đã xuất tài liệu Word:\n$path')),
       );

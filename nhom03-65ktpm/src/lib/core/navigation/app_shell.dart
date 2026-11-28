@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../features/notes/presentation/pages/diary_page.dart';
 import '../../features/notes/presentation/pages/notes_page.dart';
+import '../../features/stats/presentation/bloc/stats_cubit.dart';
+import '../../features/stats/presentation/pages/stats_page.dart';
 import '../di/app_dependencies.dart';
 import '../theme/app_theme.dart';
 import '../widgets/notes_dock.dart';
@@ -11,8 +15,7 @@ import 'coming_soon_page.dart';
 /// `02_notes_google_keep_inspired.png` (thanh tab dưới đáy, icon + nhãn).
 ///
 /// Nhóm đã chốt 4 tab đích: **Ghi chú – Nhật ký – Thống kê – Cài đặt**
-/// (`docs/ui_ux.md` mục 9). Hiện chỉ tab Ghi chú có tính năng; ba tab còn lại
-/// hiển thị `ComingSoonPage` cho tới khi #5, #17 và màn cài đặt được merge.
+/// Tab Ghi chú, Nhật ký và Thống kê đã có tính năng. Cài đặt dùng màn chờ.
 ///
 /// `IndexedStack` giữ nguyên trạng thái từng tab (từ khoá tìm kiếm, kiểu
 /// lưới/danh sách) khi người dùng chuyển qua lại.
@@ -70,15 +73,11 @@ class _AppShellState extends State<AppShell> {
               accountEmail: widget.accountEmail,
               onThemeChanged: widget.onThemeChanged,
             ),
-            const ComingSoonPage(
-              title: 'Nhật ký',
-              icon: Icons.menu_book_outlined,
-              message: 'Nhật ký hằng ngày sẽ xuất hiện ở đây khi tính năng hoàn thành.',
-            ),
-            const ComingSoonPage(
-              title: 'Thống kê',
-              icon: Icons.insights_outlined,
-              message: 'Thống kê tuần và chuỗi ngày học sẽ xuất hiện ở đây khi tính năng hoàn thành.',
+            DiaryPage(dependencies: widget.notesDependencies),
+            BlocProvider<StatsCubit>(
+              create: (_) =>
+                  StatsCubit(widget.notesDependencies.studyActivity)..load(),
+              child: const StatsPage(),
             ),
             const ComingSoonPage(
               title: 'Cài đặt',

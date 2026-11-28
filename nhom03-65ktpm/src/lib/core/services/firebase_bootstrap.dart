@@ -1,4 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 /// Khởi tạo Firebase cho app.
 ///
@@ -16,7 +18,8 @@ import 'package:firebase_core/firebase_core.dart';
 ///
 /// 2. **File cấu hình của Firebase** (`android/app/google-services.json`,
 ///    `ios/Runner/GoogleService-Info.plist`) do `flutterfire configure` sinh ra.
-///    File này không commit lên Git, mỗi thành viên tự thêm vào máy.
+///    Chỉ cần nếu chạy với dự án Firebase riêng.
+/// 3. Cấu hình client của nhóm nếu nền tảng chưa có tùy chỉnh.
 ///
 /// Không có giá trị bí mật nào được hardcode trong mã nguồn.
 class FirebaseBootstrap {
@@ -47,13 +50,27 @@ class FirebaseBootstrap {
   }
 
   /// Khởi tạo Firebase; ném `FirebaseException` nếu chưa cấu hình hoặc lỗi.
-  static Future<void> initialize() async {
+  static Future<void> initialize({FirebaseOptions? sharedOptions}) async {
     final options = optionsFromEnvironment();
     if (options != null) {
       await Firebase.initializeApp(options: options);
       return;
     }
-    // Không có --dart-define: Firebase đọc file cấu hình của nền tảng.
-    await Firebase.initializeApp();
+    if (kIsWeb) {
+      if (sharedOptions == null) {
+        throw FirebaseException(plugin: 'core', code: 'missing-web-config');
+      }
+      await Firebase.initializeApp(options: sharedOptions);
+      return;
+    }
+    try {
+      await Firebase.initializeApp();
+    } on FirebaseException {
+      if (sharedOptions == null) rethrow;
+      await Firebase.initializeApp(options: sharedOptions);
+    } on PlatformException {
+      if (sharedOptions == null) rethrow;
+      await Firebase.initializeApp(options: sharedOptions);
+    }
   }
 }

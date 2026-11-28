@@ -15,15 +15,30 @@ import '../../features/notes/data/datasources/remote/supabase_notes_remote_data_
 import '../../features/notes/data/repositories/note_repository_impl.dart';
 import '../../features/notes/data/repositories/synced_note_repository.dart';
 import '../../features/notes/domain/repositories/note_repository.dart';
+import '../../features/stats/domain/repositories/study_activity_source.dart';
+import '../../features/reminders/data/datasources/local/local_reminder_notifications.dart';
+import '../../features/reminders/data/datasources/local/reminder_notifications_data_source.dart';
+import '../../features/reminders/data/repositories/reminder_repository_impl.dart';
+import '../../features/reminders/domain/repositories/reminder_note_source.dart';
+import '../../features/reminders/domain/repositories/reminder_repository.dart';
+import '../../features/subjects/data/datasources/remote/supabase_subjects_remote_data_source.dart';
+import '../../features/subjects/data/repositories/subject_repository_impl.dart';
+import '../../features/subjects/domain/repositories/note_classification_repository.dart';
+import '../../features/subjects/domain/repositories/subject_repository.dart';
 import '../../features/summary/data/datasources/remote/ai_summary_remote_data_source.dart';
 import '../../features/summary/data/repositories/summary_repository_impl.dart';
 import '../../features/summary/domain/repositories/summary_repository.dart';
 import '../database/app_database.dart';
 import '../database/notes_dao.dart';
 import '../database/quiz_scores_dao.dart';
+import '../database/reminders_dao.dart';
 import '../error/failure.dart';
 import '../services/ai_client.dart';
 import '../sync/sync_status.dart';
+import 'study_activity_adapter.dart';
+import 'reminder_note_adapter.dart';
+import '../database/subjects_dao.dart';
+import 'note_classification_adapter.dart';
 
 /// Nơi duy nhất khởi tạo database và repository.
 ///
@@ -43,6 +58,13 @@ class AppDependencies {
     required this.syncedNotes,
     required this.accountDatabases,
     required this.syncSession,
+    required this.studyActivity,
+    required this.reminderRepository,
+    required this.reminderNotes,
+    required this.reminderNotifications,
+    required this.reminderSession,
+    required this.subjectRepository,
+    required this.noteClassificationRepository,
   });
 
   /// [supabaseClient] chỉ khác `null` khi app được chạy kèm
@@ -54,14 +76,20 @@ class AppDependencies {
     String databaseName = 'smart_note',
     AuthRepository? authRepository,
     AiClient? aiClient,
+    String? defaultAiEndpoint,
     SupabaseClient? supabaseClient,
     NotesRemoteDataSource? notesRemote,
+    ReminderNotificationsDataSource? reminderNotifications,
   }) {
     final database = AppDatabase(executor, databaseName);
     final notesDao = NotesDao(database);
     final resolvedAuth = authRepository ?? _firebaseAuthRepository();
     final resolvedAiClient =
-        aiClient ?? AiClient.fromEnvironment(idTokenProvider: _firebaseIdToken);
+        aiClient ??
+        AiClient.fromEnvironment(
+          idTokenProvider: _firebaseIdToken,
+          defaultEndpoint: defaultAiEndpoint,
+        );
 
     final NotesRemoteDataSource? remote =
         notesRemote ??
@@ -80,6 +108,15 @@ class AppDependencies {
                 .replaceAll('=', '');
             return AppDatabase(null, 'smart_note_$suffix');
           });
+    final subjectRepository = SubjectRepositoryImpl(
+      dao: () => SubjectsDao(
+        remote == null ? database : databaseFor(resolvedAuth.currentUser?.id),
+      ),
+      remote: supabaseClient == null
+          ? null
+          : SupabaseSubjectsRemoteDataSource(supabaseClient),
+      currentUserId: () => resolvedAuth.currentUser?.id,
+    );
     final SyncedNoteRepository? syncedNotes = remote == null
         ? null
         : SyncedNoteRepository(
@@ -87,7 +124,27 @@ class AppDependencies {
             remote: remote,
             currentUserId: () => resolvedAuth.currentUser?.id,
             monitor: syncMonitor,
+            prepareSubjects: supabaseClient == null
+                ? null
+                : (userId) async {
+                    if (resolvedAuth.currentUser?.id == userId) {
+                      await subjectRepository.syncWithServer();
+                    }
+                  },
           );
+
+    final NoteRepository noteRepository =
+        syncedNotes ?? NoteRepositoryImpl(notesDao);
+    final notifications = reminderNotifications ?? LocalReminderNotifications();
+    final reminderNotes = ReminderNoteAdapter(noteRepository);
+    // Nhắc nhở (#10) dùng cùng database với ghi chú của tài khoản hiện tại.
+    final reminderRepository = ReminderRepositoryImpl(
+      dao: () => RemindersDao(
+        remote == null ? database : databaseFor(resolvedAuth.currentUser?.id),
+      ),
+      notifications: notifications,
+      notes: reminderNotes,
+    );
 
     return AppDependencies._(
       () => QuizScoresDao(
@@ -95,7 +152,7 @@ class AppDependencies {
       ),
       database: database,
       notesDao: notesDao,
-      noteRepository: syncedNotes ?? NoteRepositoryImpl(notesDao),
+      noteRepository: noteRepository,
       authRepository: resolvedAuth,
       aiClient: resolvedAiClient,
       summaryRepository: SummaryRepositoryImpl(
@@ -109,6 +166,18 @@ class AppDependencies {
           : resolvedAuth.authStateChanges().listen((_) {
               unawaited(syncedNotes.start());
             }),
+      studyActivity: StudyActivityAdapter(noteRepository),
+      reminderRepository: reminderRepository,
+      reminderNotes: reminderNotes,
+      reminderNotifications: notifications,
+      // Mở app hoặc đổi tài khoản thì lên lịch lại thông báo của tài khoản đó.
+      reminderSession: notifications.isSupported
+          ? resolvedAuth.authStateChanges().listen((_) {
+              unawaited(reminderRepository.rescheduleAll());
+            })
+          : null,
+      subjectRepository: subjectRepository,
+      noteClassificationRepository: NoteClassificationAdapter(noteRepository),
     );
   }
 
@@ -162,10 +231,26 @@ class AppDependencies {
 
   final Map<String, AppDatabase> accountDatabases;
   final StreamSubscription<AppUser?>? syncSession;
+  final SubjectRepository subjectRepository;
+  final NoteClassificationRepository noteClassificationRepository;
+
+  /// Nguồn ghi chú cho thống kê tuần và streak (#17).
+  final StudyActivitySource studyActivity;
+
+  /// Nhắc nhở học tập (#10).
+  final ReminderRepository reminderRepository;
+  final ReminderNoteSource reminderNotes;
+  final ReminderNotificationsDataSource reminderNotifications;
+  final StreamSubscription<AppUser?>? reminderSession;
+
+  /// Id ghi chú cần mở khi người dùng bấm vào thông báo nhắc nhở.
+  Stream<String> get noteOpenRequests => reminderNotifications.openedNoteIds;
 
   Future<void> dispose() async {
     aiClient.close();
     await syncSession?.cancel();
+    await reminderSession?.cancel();
+    await reminderNotifications.dispose();
     await syncedNotes?.dispose();
     for (final cache in accountDatabases.values) {
       await cache.close();
