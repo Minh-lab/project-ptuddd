@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smart_note/core/error/failure.dart';
 import 'package:smart_note/features/scan/domain/entities/scanned_image.dart';
 import 'package:smart_note/features/scan/domain/repositories/scan_repository.dart';
 import 'package:smart_note/features/scan/domain/usecases/capture_image_usecase.dart';
@@ -120,6 +121,53 @@ void main() {
 
       await cubit.pickImage();
     });
+
+    test('captureImage bị từ chối quyền đặt isPermissionDenied = true', () async {
+      repository.errorToThrow = const ScanFailure(
+        'Chưa cấp quyền Camera',
+        isPermissionDenied: true,
+      );
+
+      expectLater(
+        cubit.stream,
+        emitsInOrder(<dynamic>[
+          const ScanState(status: ScanStatus.loading),
+          predicate<ScanState>(
+            (s) =>
+                s.status == ScanStatus.failure &&
+                s.isPermissionDenied &&
+                s.errorMessage == 'Chưa cấp quyền Camera',
+          ),
+        ]),
+      );
+
+      await cubit.captureImage();
+    });
+
+    test(
+      'captureImage bị từ chối quyền đặt isPermissionDenied = true',
+      () async {
+        repository.errorToThrow = const ScanFailure(
+          'Chưa cấp quyền Camera',
+          isPermissionDenied: true,
+        );
+
+        expectLater(
+          cubit.stream,
+          emitsInOrder(<dynamic>[
+            const ScanState(status: ScanStatus.loading),
+            predicate<ScanState>(
+              (s) =>
+                  s.status == ScanStatus.failure &&
+                  s.isPermissionDenied &&
+                  s.errorMessage == 'Chưa cấp quyền Camera',
+            ),
+          ]),
+        );
+
+        await cubit.captureImage();
+      },
+    );
 
     test(
       'applyCrop cắt ảnh thành công chuyển trạng thái sang success',

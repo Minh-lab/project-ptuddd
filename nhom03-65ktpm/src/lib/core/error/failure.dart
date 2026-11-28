@@ -40,7 +40,10 @@ final class AuthFailure extends Failure {
 
 /// Lỗi trong quá trình quét, chọn hoặc cắt ảnh vở.
 final class ScanFailure extends Failure {
-  const ScanFailure(super.message);
+  const ScanFailure(super.message, {this.isPermissionDenied = false});
+
+  /// Cho biết lỗi xảy ra do người dùng từ chối quyền camera hoặc thư viện ảnh.
+  final bool isPermissionDenied;
 }
 
 /// Lỗi không xác định.

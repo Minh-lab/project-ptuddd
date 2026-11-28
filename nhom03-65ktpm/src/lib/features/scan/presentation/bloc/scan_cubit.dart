@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../../core/error/failure.dart';
 import '../../domain/entities/scanned_image.dart';
 import '../../domain/usecases/capture_image_usecase.dart';
 import '../../domain/usecases/crop_image_usecase.dart';
@@ -42,6 +43,14 @@ class ScanCubit extends Cubit<ScanState> {
         return;
       }
       emit(state.copyWith(status: ScanStatus.imageReady, image: image));
+    } on ScanFailure catch (e) {
+      emit(
+        state.copyWith(
+          status: ScanStatus.failure,
+          errorMessage: e.message,
+          isPermissionDenied: e.isPermissionDenied,
+        ),
+      );
     } catch (e) {
       emit(
         state.copyWith(
@@ -66,6 +75,14 @@ class ScanCubit extends Cubit<ScanState> {
         return;
       }
       emit(state.copyWith(status: ScanStatus.imageReady, image: image));
+    } on ScanFailure catch (e) {
+      emit(
+        state.copyWith(
+          status: ScanStatus.failure,
+          errorMessage: e.message,
+          isPermissionDenied: e.isPermissionDenied,
+        ),
+      );
     } catch (e) {
       emit(
         state.copyWith(
@@ -90,6 +107,14 @@ class ScanCubit extends Cubit<ScanState> {
         croppedBytes: croppedBytes,
       );
       emit(state.copyWith(status: ScanStatus.success, image: updated));
+    } on ScanFailure catch (e) {
+      emit(
+        state.copyWith(
+          status: ScanStatus.failure,
+          errorMessage: e.message,
+          isPermissionDenied: e.isPermissionDenied,
+        ),
+      );
     } catch (e) {
       emit(
         state.copyWith(

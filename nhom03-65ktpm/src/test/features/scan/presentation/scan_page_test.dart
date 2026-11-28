@@ -2,18 +2,26 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:smart_note/core/error/failure.dart';
 import 'package:smart_note/features/scan/domain/entities/scanned_image.dart';
 import 'package:smart_note/features/scan/domain/repositories/scan_repository.dart';
 import 'package:smart_note/features/scan/presentation/pages/scan_page.dart';
 
 class StubScanRepository implements ScanRepository {
   ScannedImage? imageToReturn;
+  Exception? errorToThrow;
 
   @override
-  Future<ScannedImage?> captureFromCamera() async => imageToReturn;
+  Future<ScannedImage?> captureFromCamera() async {
+    if (errorToThrow != null) throw errorToThrow!;
+    return imageToReturn;
+  }
 
   @override
-  Future<ScannedImage?> pickFromGallery() async => imageToReturn;
+  Future<ScannedImage?> pickFromGallery() async {
+    if (errorToThrow != null) throw errorToThrow!;
+    return imageToReturn;
+  }
 
   @override
   Future<ScannedImage> saveCroppedImage({
@@ -134,5 +142,27 @@ void main() {
     expect(find.text('Cắt ảnh / Căn viền'), findsOneWidget);
     expect(find.text('Tiếp tục OCR'), findsOneWidget);
     expect(find.byType(Image), findsOneWidget);
+  });
+
+  testWidgets('Hiển thị hộp thoại hướng dẫn khi bị từ chối quyền camera', (
+    WidgetTester tester,
+  ) async {
+    repository.errorToThrow = const ScanFailure(
+      'Ứng dụng chưa có quyền truy cập Camera.',
+      isPermissionDenied: true,
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(home: ScanPage(scanRepository: repository)),
+    );
+
+    await tester.tap(find.text('Chụp ảnh bằng Camera'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Cần cấp quyền truy cập'), findsOneWidget);
+    expect(
+      find.text('Ứng dụng chưa có quyền truy cập Camera.'),
+      findsOneWidget,
+    );
   });
 }
