@@ -72,12 +72,16 @@ class _ScanPageView extends StatelessWidget {
         listener: (BuildContext context, ScanState state) {
           if (state.status == ScanStatus.failure &&
               state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.errorMessage!),
-                backgroundColor: theme.colorScheme.error,
-              ),
-            );
+            if (state.isPermissionDenied) {
+              _showPermissionDeniedDialog(context, state.errorMessage!);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(state.errorMessage!),
+                  backgroundColor: theme.colorScheme.error,
+                ),
+              );
+            }
           }
         },
         builder: (BuildContext context, ScanState state) {
@@ -109,6 +113,25 @@ class _ScanPageView extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+
+  void _showPermissionDeniedDialog(BuildContext context, String message) {
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          icon: const Icon(Icons.lock_outline, size: 32),
+          title: const Text('Cần cấp quyền truy cập'),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Đóng'),
+            ),
+          ],
+        );
+      },
     );
   }
 

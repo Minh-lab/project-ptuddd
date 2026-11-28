@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:typed_data';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -20,7 +22,31 @@ class _CropPageState extends State<CropPage> {
   int _rotationQuarterTurns = 0;
   Rect? _cropRect;
   Size? _imageBoxSize;
+  Size? _intrinsicImageSize;
   bool _isProcessing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _decodeImageSize();
+  }
+
+  Future<void> _decodeImageSize() async {
+    try {
+      final codec = await ui.instantiateImageCodec(widget.image.originalBytes);
+      final frame = await codec.getNextFrame();
+      if (!mounted) return;
+      setState(() {
+        _intrinsicImageSize = Size(
+          frame.image.width.toDouble(),
+          frame.image.height.toDouble(),
+        );
+        _cropRect = null;
+      });
+    } catch (_) {
+      // Giữ fallback theo kích thước container nếu ảnh không giải mã được kích thước trước
+    }
+  }
 
   void _rotate() {
     setState(() {
@@ -36,6 +62,22 @@ class _CropPageState extends State<CropPage> {
         _cropRect = _calculateDefaultCropRect(_imageBoxSize!);
       });
     }
+  }
+
+  Size _computeFittedSize(Size containerSize) {
+    final intrinsic = _intrinsicImageSize;
+    if (intrinsic == null || intrinsic.isEmpty) {
+      return containerSize;
+    }
+    final isOddRotation = _rotationQuarterTurns.isOdd;
+    final rotatedSourceSize = isOddRotation
+        ? Size(intrinsic.height, intrinsic.width)
+        : intrinsic;
+    return applyBoxFit(
+      BoxFit.contain,
+      rotatedSourceSize,
+      containerSize,
+    ).destination;
   }
 
   Rect _calculateDefaultCropRect(Size size) {
@@ -58,7 +100,7 @@ class _CropPageState extends State<CropPage> {
     setState(() => _isProcessing = true);
 
     try {
-      // Chuẩn hóa tọa độ cắt về khoảng [0.0, 1.0]
+      // Chuẩn hóa tọa độ cắt về khoảng [0.0, 1.0] theo đúng vùng ảnh hiển thị
       final normalizedRect = Rect.fromLTRB(
         _cropRect!.left / _imageBoxSize!.width,
         _cropRect!.top / _imageBoxSize!.height,
@@ -119,43 +161,55 @@ class _CropPageState extends State<CropPage> {
                             constraints.maxWidth,
                             constraints.maxHeight,
                           );
-                          _imageBoxSize = containerSize;
-                          _cropRect ??= _calculateDefaultCropRect(
-                            containerSize,
-                          );
+                          final fittedSize = _computeFittedSize(containerSize);
+                          if (_imageBoxSize != fittedSize) {
+                            _imageBoxSize = fittedSize;
+                            _cropRect = _calculateDefaultCropRect(fittedSize);
+                          } else {
+                            _cropRect ??= _calculateDefaultCropRect(fittedSize);
+                          }
 
-                          return Stack(
-                            alignment: Alignment.center,
-                            children: <Widget>[
-                              // Ảnh nền được xoay
-                              RotatedBox(
-                                quarterTurns: _rotationQuarterTurns,
-                                child: Image.memory(
-                                  widget.image.originalBytes,
-                                  width: containerSize.width,
-                                  height: containerSize.height,
-                                  fit: BoxFit.contain,
-                                ),
-                              ),
-
-                              // Khung lưới cắt tương tác
-                              CropOverlay(
-                                containerSize: containerSize,
-                                initialRect: _cropRect!,
-                                onRectChanged: (Rect rect) => _cropRect = rect,
-                              ),
-
-                              // Vòng xoay khi đang xử lý
-                              if (_isProcessing)
-                                Container(
-                                  color: Colors.black45,
-                                  child: const Center(
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                    ),
+                          return SizedBox(
+                            width: fittedSize.width,
+                            height: fittedSize.height,
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: <Widget>[
+                                // Ảnh nền được xoay vừa khít khung hiển thị
+                                RotatedBox(
+                                  quarterTurns: _rotationQuarterTurns,
+                                  child: Image.memory(
+                                    widget.image.originalBytes,
+                                    fit: BoxFit.fill,
+                                    width: _rotationQuarterTurns.isOdd
+                                        ? fittedSize.height
+                                        : fittedSize.width,
+                                    height: _rotationQuarterTurns.isOdd
+                                        ? fittedSize.width
+                                        : fittedSize.height,
                                   ),
                                 ),
-                            ],
+
+                                // Khung lưới cắt tương tác nằm khớp trên ảnh
+                                CropOverlay(
+                                  containerSize: fittedSize,
+                                  initialRect: _cropRect!,
+                                  onRectChanged: (Rect rect) =>
+                                      _cropRect = rect,
+                                ),
+
+                                // Vòng xoay khi đang xử lý
+                                if (_isProcessing)
+                                  Container(
+                                    color: Colors.black45,
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
                           );
                         },
                   ),

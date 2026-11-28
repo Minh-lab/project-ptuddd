@@ -9,7 +9,7 @@ class CropUtils {
   CropUtils._();
 
   /// Cắt dữ liệu ảnh theo vùng tỉ lệ chuẩn hóa [normalizedRect] (0.0 đến 1.0)
-  /// và số lần xoay góc 90 độ [rotationQuarterTurns] (0, 1, 2, 3).
+  /// tính trên ảnh **đã xoay** theo [rotationQuarterTurns] (0, 1, 2, 3).
   static Future<Uint8List> cropImage({
     required Uint8List imageBytes,
     required Rect normalizedRect,
@@ -21,61 +21,70 @@ class CropUtils {
     final imgWidth = image.width.toDouble();
     final imgHeight = image.height.toDouble();
 
-    // Giới hạn tọa độ trong kích thước ảnh thật
-    final safeLeft = (normalizedRect.left * imgWidth).clamp(0.0, imgWidth);
-    final safeTop = (normalizedRect.top * imgHeight).clamp(0.0, imgHeight);
-    final safeRight = (normalizedRect.right * imgWidth).clamp(
-      safeLeft + 1,
-      imgWidth,
+    final turns = rotationQuarterTurns % 4;
+    final isOddRotation = turns.isOdd;
+    final rotatedWidth = isOddRotation ? imgHeight : imgWidth;
+    final rotatedHeight = isOddRotation ? imgWidth : imgHeight;
+
+    // Giới hạn tọa độ trong kích thước ảnh sau khi xoay
+    final safeLeft = (normalizedRect.left * rotatedWidth).clamp(
+      0.0,
+      rotatedWidth - 1,
     );
-    final safeBottom = (normalizedRect.bottom * imgHeight).clamp(
+    final safeTop = (normalizedRect.top * rotatedHeight).clamp(
+      0.0,
+      rotatedHeight - 1,
+    );
+    final safeRight = (normalizedRect.right * rotatedWidth).clamp(
+      safeLeft + 1,
+      rotatedWidth,
+    );
+    final safeBottom = (normalizedRect.bottom * rotatedHeight).clamp(
       safeTop + 1,
-      imgHeight,
+      rotatedHeight,
     );
 
-    final pixelCropRect = Rect.fromLTRB(
-      safeLeft,
-      safeTop,
-      safeRight,
-      safeBottom,
+    final cropWidth = (safeRight - safeLeft).round().clamp(
+      1,
+      rotatedWidth.toInt(),
     );
-    final cropWidth = pixelCropRect.width.toInt().clamp(1, image.width);
-    final cropHeight = pixelCropRect.height.toInt().clamp(1, image.height);
+    final cropHeight = (safeBottom - safeTop).round().clamp(
+      1,
+      rotatedHeight.toInt(),
+    );
 
     final recorder = ui.PictureRecorder();
     final canvas = Canvas(recorder);
-
-    final turns = rotationQuarterTurns % 4;
-    final isOddRotation = turns % 2 != 0;
-    final outputWidth = isOddRotation ? cropHeight : cropWidth;
-    final outputHeight = isOddRotation ? cropWidth : cropHeight;
+    final paint = Paint()..filterQuality = FilterQuality.high;
 
     if (turns == 0) {
       canvas.drawImageRect(
         image,
-        pixelCropRect,
+        Rect.fromLTRB(safeLeft, safeTop, safeRight, safeBottom),
         Rect.fromLTWH(0, 0, cropWidth.toDouble(), cropHeight.toDouble()),
-        Paint()..filterQuality = FilterQuality.high,
+        paint,
       );
     } else {
+      // Xoay ảnh gốc quanh tâm rồi dịch chuyển sao cho góc trên-trái vùng cắt nằm ở (0, 0)
       canvas.save();
-      canvas.translate(outputWidth / 2, outputHeight / 2);
+      canvas.translate(-safeLeft, -safeTop);
+      canvas.translate(rotatedWidth / 2, rotatedHeight / 2);
       canvas.rotate(turns * math.pi / 2);
       canvas.drawImageRect(
         image,
-        pixelCropRect,
+        Rect.fromLTWH(0, 0, imgWidth, imgHeight),
         Rect.fromCenter(
           center: Offset.zero,
-          width: cropWidth.toDouble(),
-          height: cropHeight.toDouble(),
+          width: imgWidth,
+          height: imgHeight,
         ),
-        Paint()..filterQuality = FilterQuality.high,
+        paint,
       );
       canvas.restore();
     }
 
     final picture = recorder.endRecording();
-    final croppedUiImage = await picture.toImage(outputWidth, outputHeight);
+    final croppedUiImage = await picture.toImage(cropWidth, cropHeight);
     final byteData = await croppedUiImage.toByteData(
       format: ui.ImageByteFormat.png,
     );

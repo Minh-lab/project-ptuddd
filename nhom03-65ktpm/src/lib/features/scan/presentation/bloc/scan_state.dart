@@ -9,11 +9,15 @@ class ScanState extends Equatable {
     this.status = ScanStatus.initial,
     this.image,
     this.errorMessage,
+    this.isPermissionDenied = false,
   });
 
   final ScanStatus status;
   final ScannedImage? image;
   final String? errorMessage;
+
+  /// Cho biết lỗi hiện tại là do thiếu quyền truy cập camera hoặc thư viện.
+  final bool isPermissionDenied;
 
   bool get isLoading =>
       status == ScanStatus.loading || status == ScanStatus.cropping;
@@ -24,14 +28,21 @@ class ScanState extends Equatable {
     ScanStatus? status,
     ScannedImage? image,
     String? errorMessage,
+    bool isPermissionDenied = false,
   }) {
     return ScanState(
       status: status ?? this.status,
       image: image ?? this.image,
       errorMessage: errorMessage,
+      isPermissionDenied: isPermissionDenied,
     );
   }
 
   @override
-  List<Object?> get props => <Object?>[status, image, errorMessage];
+  List<Object?> get props => <Object?>[
+    status,
+    image,
+    errorMessage,
+    isPermissionDenied,
+  ];
 }
