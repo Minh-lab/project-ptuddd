@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -41,8 +43,45 @@ class _NotesPageState extends State<NotesPage> {
   bool _showTools = false;
   String _query = '';
   String? _selectedTag;
+  StreamSubscription<String>? _openRequests;
 
   bool get _selectionMode => _selectedIds.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    // Bấm vào thông báo nhắc nhở (#10) thì mở đúng ghi chú đó.
+    _openRequests = widget.dependencies.noteOpenRequests.listen(_openNoteById);
+  }
+
+  @override
+  void dispose() {
+    unawaited(_openRequests?.cancel());
+    super.dispose();
+  }
+
+  Future<void> _openNoteById(String id) async {
+    final cubit = context.read<NotesCubit>();
+    var state = cubit.state;
+    if (state.status == NotesStatus.initial || state.isLoading) {
+      state = await cubit.stream.firstWhere(
+        (NotesState next) =>
+            next.status != NotesStatus.initial && !next.isLoading,
+      );
+    }
+    if (!mounted) return;
+    final note = state.notes.where((Note note) => note.id == id).firstOrNull;
+    if (note == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Ghi chú của nhắc nhở này không còn nữa.'),
+        ),
+      );
+      return;
+    }
+    Navigator.of(context).popUntil((Route<dynamic> route) => route.isFirst);
+    _openEditor(cubit, note);
+  }
 
   List<String> _tags(List<Note> notes) {
     final tags = <String>{};

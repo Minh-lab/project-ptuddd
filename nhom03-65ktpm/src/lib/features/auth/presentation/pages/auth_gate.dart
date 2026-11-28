@@ -7,6 +7,7 @@ import '../../../../core/theme/app_spacing.dart';
 import '../../../../core/widgets/app_loading_indicator.dart';
 import '../../../../core/widgets/app_logo.dart';
 import '../../../notes/presentation/bloc/notes_cubit.dart';
+import '../../../reminders/presentation/widgets/open_reminders_button.dart';
 import '../bloc/auth_cubit.dart';
 import '../bloc/auth_state.dart';
 import '../widgets/logout_button.dart';
@@ -41,7 +42,13 @@ class AuthGate extends StatelessWidget {
             )..load(),
             child: AppShell(
               notesDependencies: dependencies,
-              notesActions: const <Widget>[LogoutButton()],
+              notesActions: <Widget>[
+                OpenRemindersButton(
+                  reminderRepository: dependencies.reminderRepository,
+                  reminderNotes: dependencies.reminderNotes,
+                ),
+                const LogoutButton(),
+              ],
             ),
           );
         }
